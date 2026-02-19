@@ -148,6 +148,34 @@ Start the server first (`npm start`), then:
 }
 ```
 
+### Docker — stdio
+
+Use the pre-built multi-arch image (amd64 + arm64) from GHCR directly as the MCP command. No local Node.js installation required:
+
+```json
+{
+  "mcpServers": {
+    "rocket-chat": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "-e", "ROCKETCHAT_URL",
+        "-e", "ROCKETCHAT_USER_ID",
+        "-e", "ROCKETCHAT_AUTH_TOKEN",
+        "ghcr.io/twostone/rocket-chat-mcp:edge",
+        "node", "build/index.js", "--stdio"
+      ],
+      "env": {
+        "ROCKETCHAT_URL": "https://chat.example.com",
+        "ROCKETCHAT_USER_ID": "your-user-id",
+        "ROCKETCHAT_AUTH_TOKEN": "your-auth-token"
+      }
+    }
+  }
+}
+```
+
 ## Available Tools
 
 ### `get-channel-info`
