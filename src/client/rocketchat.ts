@@ -4,7 +4,9 @@ import type {
   MessagesResponse,
   RoomInfoResponse,
   GroupMembersResponse,
+  ChannelMembersResponse,
   RoomsGetResponse,
+  DirectoryResponse,
 } from "../types.js";
 
 export interface SendMessageOptions {
@@ -199,6 +201,60 @@ export class RocketChatClient {
     }
 
     return (await response.json()) as GroupMembersResponse;
+  }
+
+  async getChannelMembers(
+    roomId: string,
+    count?: number,
+    offset?: number
+  ): Promise<ChannelMembersResponse> {
+    const params = new URLSearchParams({ roomId });
+    if (count !== undefined) params.set("count", String(count));
+    if (offset !== undefined) params.set("offset", String(offset));
+
+    const response = await fetch(
+      `${this.baseUrl}/channels.members?${params.toString()}`,
+      { method: "GET", headers: this.headers }
+    );
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(
+        `Rocket.Chat API error (${response.status}): ${text}`
+      );
+    }
+
+    return (await response.json()) as ChannelMembersResponse;
+  }
+
+  async searchDirectory(
+    text: string,
+    type: "users" | "channels",
+    count?: number,
+    offset?: number,
+    workspace?: string
+  ): Promise<DirectoryResponse> {
+    const query: Record<string, string> = { text, type };
+    if (workspace !== undefined) query.workspace = workspace;
+
+    const params = new URLSearchParams();
+    params.set("query", JSON.stringify(query));
+    if (count !== undefined) params.set("count", String(count));
+    if (offset !== undefined) params.set("offset", String(offset));
+
+    const response = await fetch(
+      `${this.baseUrl}/directory?${params.toString()}`,
+      { method: "GET", headers: this.headers }
+    );
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(
+        `Rocket.Chat API error (${response.status}): ${text}`
+      );
+    }
+
+    return (await response.json()) as DirectoryResponse;
   }
 
   async getRooms(updatedSince?: string): Promise<RoomsGetResponse> {

@@ -409,6 +409,132 @@ describe("RocketChatClient", () => {
     });
   });
 
+  describe("getChannelMembers", () => {
+    it("calls GET /api/v1/channels.members with roomId", async () => {
+      const mockResponse = {
+        members: [{ _id: "u1", username: "alice", name: "Alice" }],
+        success: true,
+      };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      const result = await client.getChannelMembers("ch1");
+
+      const [url] = mockFetch.mock.calls[0];
+      expect(url).toBe(
+        "https://chat.example.com/api/v1/channels.members?roomId=ch1"
+      );
+      expect(result).toEqual(mockResponse);
+    });
+
+    it("includes count and offset when provided", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ members: [], success: true }),
+      });
+
+      await client.getChannelMembers("ch1", 10, 5);
+
+      const [url] = mockFetch.mock.calls[0];
+      expect(url).toContain("count=10");
+      expect(url).toContain("offset=5");
+    });
+
+    it("throws on non-200 response", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        text: async () => "Not allowed",
+      });
+
+      await expect(client.getChannelMembers("ch1")).rejects.toThrow(
+        "Rocket.Chat API error (403): Not allowed"
+      );
+    });
+  });
+
+  describe("searchDirectory", () => {
+    it("calls GET /api/v1/directory with query JSON", async () => {
+      const mockResponse = {
+        result: [{ _id: "u1", username: "alice", name: "Alice" }],
+        count: 1,
+        offset: 0,
+        total: 1,
+        success: true,
+      };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      const result = await client.searchDirectory("alice", "users");
+
+      const [url] = mockFetch.mock.calls[0];
+      expect(url).toContain(
+        "https://chat.example.com/api/v1/directory?"
+      );
+      expect(url).toContain(
+        `query=${encodeURIComponent(JSON.stringify({ text: "alice", type: "users" }))}`
+      );
+      expect(result).toEqual(mockResponse);
+    });
+
+    it("includes workspace in query JSON when provided", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          result: [],
+          count: 0,
+          offset: 0,
+          total: 0,
+          success: true,
+        }),
+      });
+
+      await client.searchDirectory("bob", "users", undefined, undefined, "all");
+
+      const [url] = mockFetch.mock.calls[0];
+      expect(url).toContain(
+        `query=${encodeURIComponent(JSON.stringify({ text: "bob", type: "users", workspace: "all" }))}`
+      );
+    });
+
+    it("includes count and offset when provided", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          result: [],
+          count: 0,
+          offset: 10,
+          total: 0,
+          success: true,
+        }),
+      });
+
+      await client.searchDirectory("test", "channels", 5, 10);
+
+      const [url] = mockFetch.mock.calls[0];
+      expect(url).toContain("count=5");
+      expect(url).toContain("offset=10");
+    });
+
+    it("throws on non-200 response", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        text: async () => "Internal Server Error",
+      });
+
+      await expect(
+        client.searchDirectory("test", "users")
+      ).rejects.toThrow(
+        "Rocket.Chat API error (500): Internal Server Error"
+      );
+    });
+  });
+
   describe("getRooms", () => {
     it("calls GET /api/v1/rooms.get", async () => {
       const mockResponse = {

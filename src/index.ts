@@ -15,7 +15,9 @@ import { registerGetRoomInfo } from "./tools/get-room-info.js";
 import { registerGetThreadMessages } from "./tools/get-thread-messages.js";
 import { registerGetGroupMessages } from "./tools/get-group-messages.js";
 import { registerGetGroupMembers } from "./tools/get-group-members.js";
+import { registerGetChannelMembers } from "./tools/get-channel-members.js";
 import { registerListRooms } from "./tools/list-rooms.js";
+import { registerSearchDirectory } from "./tools/search-directory.js";
 
 const config = getConfigFromEnv();
 const rcClient = new RocketChatClient(config);
@@ -33,7 +35,9 @@ function createServer(): McpServer {
   registerGetThreadMessages(server, rcClient);
   registerGetGroupMessages(server, rcClient);
   registerGetGroupMembers(server, rcClient);
+  registerGetChannelMembers(server, rcClient);
   registerListRooms(server, rcClient);
+  registerSearchDirectory(server, rcClient);
 
   return server;
 }

@@ -232,6 +232,16 @@ List members of a private group.
 | `count` | number | no | Number of members to return (default: 20) |
 | `offset` | number | no | Number of members to skip (pagination) |
 
+### `get-channel-members`
+
+List members of a public channel.
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `roomId` | string | yes | Public channel room ID |
+| `count` | number | no | Number of members to return (default: 20) |
+| `offset` | number | no | Number of members to skip (pagination) |
+
 ### `list-rooms`
 
 List all joined rooms (public channels, private groups, and DMs) of the authenticated user.
@@ -240,15 +250,28 @@ List all joined rooms (public channels, private groups, and DMs) of the authenti
 |---|---|---|---|
 | `updatedSince` | string | no | ISO 8601 date to only return rooms updated since that date |
 
+### `search-directory`
+
+Search the Rocket.Chat workspace directory for users or channels.
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `text` | string | yes | The search term to filter results |
+| `type` | `"users"` \| `"channels"` | yes | Type of directory entries to search for |
+| `count` | number | no | Number of results to return |
+| `offset` | number | no | Number of results to skip (pagination) |
+| `workspace` | `"local"` \| `"all"` | no | Workspace scope: `local` (default) or `all` (requires federation) |
+
 ## Typical LLM Workflow
 
 1. **`get-channel-info`** or **`get-group-info`** — resolve a channel/group name → `roomId`
 2. **`list-rooms`** — discover all joined rooms (channels, groups, DMs)
-3. **`get-messages`** or **`get-group-messages`** — read recent messages
-4. **`search-messages`** — find specific content
-5. **`get-thread-messages`** — read a thread conversation
-6. **`get-group-members`** — see who is in a group
-7. **`send-message`** — reply (optionally in a thread via `tmid`)
+3. **`search-directory`** — find users or channels by name across the workspace
+4. **`get-messages`** or **`get-group-messages`** — read recent messages
+5. **`search-messages`** — find specific content
+6. **`get-thread-messages`** — read a thread conversation
+7. **`get-group-members`** or **`get-channel-members`** — see who is in a room
+8. **`send-message`** — reply (optionally in a thread via `tmid`)
 
 ## Docker
 

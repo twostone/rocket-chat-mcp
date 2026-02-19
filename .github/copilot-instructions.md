@@ -23,7 +23,9 @@ src/
 │   ├── get-group-info.ts
 │   ├── get-group-messages.ts
 │   ├── get-group-members.ts
-│   └── list-rooms.ts
+│   ├── get-channel-members.ts
+│   ├── list-rooms.ts
+│   └── search-directory.ts
 ├── client/
 │   └── rocketchat.ts     # Typed Rocket.Chat HTTP client (auth, error handling)
 └── types.ts              # Shared Zod schemas and TS types
@@ -37,7 +39,9 @@ tests/                    # Mirrors src/ structure
 │   ├── get-group-info.test.ts
 │   ├── get-group-messages.test.ts
 │   ├── get-group-members.test.ts
-│   └── list-rooms.test.ts
+│   ├── get-channel-members.test.ts
+│   ├── list-rooms.test.ts
+│   └── search-directory.test.ts
 └── client/
     └── rocketchat.test.ts
 ```
@@ -115,7 +119,9 @@ The `Dockerfile` uses a multi-stage build (install + build in `node:22`, copy in
   - `GET /api/v1/groups.info` — resolve private group name to room ID (`roomName`)
   - `GET /api/v1/groups.history` — read private group message history (`roomId`, pagination, date filters)
   - `GET /api/v1/groups.members` — list members of a private group (`roomId`, pagination)
+  - `GET /api/v1/channels.members` — list members of a public channel (`roomId`, pagination)
   - `GET /api/v1/rooms.get` — list all joined rooms (public channels, private groups, DMs)
+  - `GET /api/v1/directory` — search workspace directory for users or channels (`query` JSON with `text`/`type`)
 - **MCP clients** connect via Streamable HTTP at `http://<host>:3000/mcp` or stdio (`--stdio` flag)
 
 ## Security

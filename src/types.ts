@@ -64,12 +64,42 @@ export const GroupMembersResponseSchema = z.object({
 
 export type GroupMembersResponse = z.infer<typeof GroupMembersResponseSchema>;
 
+export const ChannelMembersResponseSchema = z.object({
+  members: z.array(GroupMemberSchema),
+  success: z.boolean(),
+});
+
+export type ChannelMembersResponse = z.infer<
+  typeof ChannelMembersResponseSchema
+>;
+
 export const RoomsGetResponseSchema = z.object({
   update: z.array(RoomInfoSchema),
   success: z.boolean(),
 });
 
 export type RoomsGetResponse = z.infer<typeof RoomsGetResponseSchema>;
+
+export const DirectoryResultSchema = z.object({
+  _id: z.string(),
+  name: z.string().optional(),
+  username: z.string().optional(),
+  t: z.string().optional(),
+  usersCount: z.number().optional(),
+  ts: z.string().optional(),
+});
+
+export type DirectoryResult = z.infer<typeof DirectoryResultSchema>;
+
+export const DirectoryResponseSchema = z.object({
+  result: z.array(DirectoryResultSchema),
+  count: z.number(),
+  offset: z.number(),
+  total: z.number(),
+  success: z.boolean(),
+});
+
+export type DirectoryResponse = z.infer<typeof DirectoryResponseSchema>;
 
 export interface RocketChatConfig {
   url: string;
