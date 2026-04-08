@@ -19,8 +19,7 @@ src/
 │   ├── get-messages.ts
 │   ├── get-thread-messages.ts
 │   ├── search-messages.ts
-│   ├── get-channel-info.ts
-│   ├── get-group-info.ts
+│   ├── get-room-info.ts
 │   ├── get-group-messages.ts
 │   ├── get-group-members.ts
 │   ├── get-channel-members.ts
@@ -35,8 +34,7 @@ tests/                    # Mirrors src/ structure
 │   ├── get-messages.test.ts
 │   ├── get-thread-messages.test.ts
 │   ├── search-messages.test.ts
-│   ├── get-channel-info.test.ts
-│   ├── get-group-info.test.ts
+│   ├── get-room-info.test.ts
 │   ├── get-group-messages.test.ts
 │   ├── get-group-members.test.ts
 │   ├── get-channel-members.test.ts
@@ -129,3 +127,29 @@ The `Dockerfile` uses a multi-stage build (install + build in `node:22`, copy in
 - Auth tokens come from environment variables — never hardcode or log them
 - Validate all user-supplied room IDs and message content through Zod schemas before hitting the API
 - The server runs as an HTTP service (Docker or direct); no `bin` field needed for Streamable HTTP transport
+
+## Common Agent Workflows
+
+Most tools require a **room ID** rather than a room name. Use `get-room-info` to resolve a name first.
+
+### Send a message to a channel by name
+1. `get-room-info({ roomName: "general" })` → extract `_id` from the response
+2. `send-message({ roomId: "<_id>", message: "Hello!" })`
+
+### Read channel history by name
+1. `get-room-info({ roomName: "general" })` → extract `_id` and `t` (room type)
+2. If `t` is `"c"` (public channel): `get-messages({ roomId: "<_id>" })`
+3. If `t` is `"p"` (private group): `get-group-messages({ roomId: "<_id>" })`
+
+### List channel members by name
+1. `get-room-info({ roomName: "general" })` → extract `_id` and check `t` field
+2. If `t` is `"c"` (public channel): `get-channel-members({ roomId: "<_id>" })`
+3. If `t` is `"p"` (private group): `get-group-members({ roomId: "<_id>" })`
+
+### Reply to a thread
+1. `get-messages({ roomId: "<roomId>" })` or `search-messages(...)` → find the parent message and extract its `_id`
+2. `send-message({ roomId: "<roomId>", message: "reply text", tmid: "<parent _id>" })`
+
+### Discover available channels
+- `list-rooms({})` — returns all rooms the authenticated user has joined (each with `_id` and `name`)
+- `search-directory({ text: "eng", type: "channels" })` — search workspace directory for channels matching a query

@@ -9,9 +9,14 @@ export function registerSendMessage(
   server.registerTool(
     "send-message",
     {
-      description: "Send a message to a Rocket.Chat channel or direct message",
+      description:
+        "Send a message to a Rocket.Chat room by its room ID. Use get-room-info first to resolve a channel/group/DM name to a room ID.",
       inputSchema: {
-        roomId: z.string().describe("The room ID to send the message to"),
+        roomId: z
+          .string()
+          .describe(
+            "The room ID to send the message to (use get-room-info to resolve a channel name to an ID)"
+          ),
         message: z.string().describe("The message text to send"),
         tmid: z
           .string()

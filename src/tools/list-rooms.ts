@@ -10,7 +10,7 @@ export function registerListRooms(
     "list-rooms",
     {
       description:
-        "List all joined rooms (public channels, private groups, and DMs) of the authenticated Rocket.Chat user",
+        "List all joined rooms (public channels, private groups, and DMs) of the authenticated Rocket.Chat user. Each room includes _id (room ID) and name, usable with other tools like get-messages and send-message.",
       inputSchema: {
         updatedSince: z
           .string()

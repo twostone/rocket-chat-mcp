@@ -10,7 +10,7 @@ export function registerSearchDirectory(
     "search-directory",
     {
       description:
-        "Search the Rocket.Chat workspace directory for users or channels",
+        "Search the Rocket.Chat workspace directory for users or channels (case-insensitive substring match). Returns matching entries with their IDs. Use this to find the correct room name before calling get-room-info when the exact casing is unknown.",
       inputSchema: {
         text: z.string().describe("The search term to filter results"),
         type: z

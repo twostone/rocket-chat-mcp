@@ -9,9 +9,14 @@ export function registerGetMessages(
   server.registerTool(
     "get-messages",
     {
-      description: "Get message history from a Rocket.Chat channel",
+      description:
+        "Get message history from a Rocket.Chat public channel (type 'c') by room ID. Use get-room-info to resolve a channel name to a room ID. For private groups (type 'p'), use get-group-messages instead.",
       inputSchema: {
-        roomId: z.string().describe("The room ID to get messages from"),
+        roomId: z
+          .string()
+          .describe(
+            "The room ID to get messages from (use get-room-info to resolve a channel name)"
+          ),
         count: z
           .number()
           .optional()
