@@ -6,6 +6,6 @@
     "declaration": false,
     "sourceMap": false
   },
-  "include": ["src/**/*", "tests/**/*", "eslint.config.mjs"],
+  "include": ["src/**/*", "tests/**/*", "eslint.config.mjs", "vitest.config.ts", "vitest.config.integration.ts"],
   "exclude": ["node_modules", "build"]
 }

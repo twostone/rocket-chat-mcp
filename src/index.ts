@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 
 import { randomUUID } from "node:crypto";
+import { pathToFileURL } from "node:url";
 import express from "express";
+import type { Application } from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -19,36 +21,27 @@ import { registerGetChannelMembers } from "./tools/get-channel-members.js";
 import { registerListRooms } from "./tools/list-rooms.js";
 import { registerSearchDirectory } from "./tools/search-directory.js";
 
-const config = getConfigFromEnv();
-const rcClient = new RocketChatClient(config);
-
-function createServer(): McpServer {
+export function createServer(client: RocketChatClient): McpServer {
   const server = new McpServer({
     name: "rocket-chat-mcp",
     version: "1.0.0",
   });
 
-  registerSendMessage(server, rcClient);
-  registerGetMessages(server, rcClient);
-  registerSearchMessages(server, rcClient);
-  registerGetRoomInfo(server, rcClient);
-  registerGetThreadMessages(server, rcClient);
-  registerGetGroupMessages(server, rcClient);
-  registerGetGroupMembers(server, rcClient);
-  registerGetChannelMembers(server, rcClient);
-  registerListRooms(server, rcClient);
-  registerSearchDirectory(server, rcClient);
+  registerSendMessage(server, client);
+  registerGetMessages(server, client);
+  registerSearchMessages(server, client);
+  registerGetRoomInfo(server, client);
+  registerGetThreadMessages(server, client);
+  registerGetGroupMessages(server, client);
+  registerGetGroupMembers(server, client);
+  registerGetChannelMembers(server, client);
+  registerListRooms(server, client);
+  registerSearchDirectory(server, client);
 
   return server;
 }
 
-const useStdio = process.argv.includes("--stdio");
-
-if (useStdio) {
-  const server = createServer();
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-} else {
+export function createExpressApp(client: RocketChatClient): Application {
   const transports = new Map<string, StreamableHTTPServerTransport>();
 
   const app = express();
@@ -79,7 +72,7 @@ if (useStdio) {
         }
       };
 
-      const server = createServer();
+      const server = createServer(client);
       await server.connect(transport);
     } else {
       res.status(400).json({
@@ -96,9 +89,27 @@ if (useStdio) {
     await transport.handleRequest(req, res, req.body);
   });
 
-  const port = Number.parseInt(process.env.PORT ?? "3000", 10);
-  app.listen(port, () => {
-    console.log(`rocket-chat-mcp server listening on port ${port}`);
-    console.log(`Streamable HTTP endpoint: http://localhost:${port}/mcp`);
-  });
+  return app;
+}
+
+const isEntryPoint =
+  import.meta.url === pathToFileURL(process.argv[1] ?? "").href;
+
+if (isEntryPoint) {
+  const config = getConfigFromEnv();
+  const rcClient = new RocketChatClient(config);
+  const useStdio = process.argv.includes("--stdio");
+
+  if (useStdio) {
+    const server = createServer(rcClient);
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
+  } else {
+    const app = createExpressApp(rcClient);
+    const port = Number.parseInt(process.env.PORT ?? "3000", 10);
+    app.listen(port, () => {
+      console.log(`rocket-chat-mcp server listening on port ${port}`);
+      console.log(`Streamable HTTP endpoint: http://localhost:${port}/mcp`);
+    });
+  }
 }
