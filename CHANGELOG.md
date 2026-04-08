@@ -1,3 +1,10 @@
+# [0.2.0](https://github.com/TwoStone/rocket-chat-mcp/compare/v0.1.0...v0.2.0) (2026-04-08)
+
+
+### Features
+
+* add integration tests with testcontainers and CI workflow ([070b69b](https://github.com/TwoStone/rocket-chat-mcp/commit/070b69b9b3e10041da63fb1c241d57dd1d0aeec3))
+
 # [0.1.0](https://github.com/TwoStone/rocket-chat-mcp/compare/v0.0.1...v0.1.0) (2026-02-19)
 
 
