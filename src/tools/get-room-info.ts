@@ -10,11 +10,13 @@ export function registerGetRoomInfo(
     "get-room-info",
     {
       description:
-        "Resolve a Rocket.Chat room name to its room ID and metadata (works for channels, groups, and DMs)",
+        "Resolve a Rocket.Chat room name to its room ID and metadata. Returns a room object with _id (the room ID needed by send-message, get-messages, and other tools), name, type (t), usersCount, topic, and description. Works for channels, groups, and DMs.",
       inputSchema: {
         roomName: z
           .string()
-          .describe("The room name to look up (without leading #)"),
+          .describe(
+            "The exact room name to look up (case-sensitive, without leading #). If unsure about casing, use search-directory first to find the correct name."
+          ),
       },
     },
     async ({ roomName }) => {

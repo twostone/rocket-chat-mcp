@@ -9,11 +9,14 @@ export function registerGetChannelMembers(
   server.registerTool(
     "get-channel-members",
     {
-      description: "List members of a Rocket.Chat public channel",
+      description:
+        "List members of a Rocket.Chat public channel (type 'c') by room ID. Use get-room-info to resolve a channel name to a room ID. For private groups (type 'p'), use get-group-members instead.",
       inputSchema: {
         roomId: z
           .string()
-          .describe("The public channel room ID to list members for"),
+          .describe(
+            "The public channel room ID to list members for (use get-room-info to resolve a channel name)"
+          ),
         count: z
           .number()
           .optional()

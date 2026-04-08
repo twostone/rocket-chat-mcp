@@ -9,9 +9,14 @@ export function registerSearchMessages(
   server.registerTool(
     "search-messages",
     {
-      description: "Search for messages in a Rocket.Chat channel by text",
+      description:
+        "Search for messages in a Rocket.Chat channel by text. Requires a room ID — use get-room-info to resolve a channel name.",
       inputSchema: {
-        roomId: z.string().describe("The room ID to search in"),
+        roomId: z
+          .string()
+          .describe(
+            "The room ID to search in (use get-room-info to resolve a channel name)"
+          ),
         searchText: z.string().describe("The text to search for"),
         count: z
           .number()
