@@ -8,8 +8,8 @@ An [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) server that 
 - Read channel and private group history with date filtering
 - Full-text message search
 - Read thread conversations
-- Resolve channel and group names to room IDs
-- List private groups and their members
+- Resolve room names to room IDs
+- List room members (channels and groups)
 - Two transport modes: **Streamable HTTP** (default) and **stdio** (`--stdio` flag)
 
 ## Prerequisites
@@ -178,21 +178,21 @@ Use the pre-built multi-arch image (amd64 + arm64) from GHCR directly as the MCP
 
 ## Available Tools
 
-### `get-channel-info`
+### `get-room-info`
 
-Resolve a channel name to its room ID. Use this first to get the `roomId` needed by other tools.
-
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| `channelName` | string | yes | Channel name without leading `#` |
-
-### `get-messages`
-
-Get message history from a channel.
+Resolve a room name to its room ID and metadata (topic, description, member count). Works for channels, groups, and DMs.
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
-| `roomId` | string | yes | Room ID |
+| `roomName` | string | yes | Room name without leading `#` or `+` |
+
+### `get-room-messages`
+
+Get message history from a public channel or private group by name. The room type is detected automatically.
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `roomName` | string | yes | Room name without leading `#` or `+` |
 | `count` | number | no | Number of messages to return (default: 20) |
 | `offset` | number | no | Number of messages to skip (pagination) |
 | `oldest` | string | no | ISO 8601 timestamp — only return messages after this date |
@@ -200,11 +200,11 @@ Get message history from a channel.
 
 ### `search-messages`
 
-Full-text search for messages in a channel.
+Full-text search for messages in a room by name. Works for channels, groups, and DMs.
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
-| `roomId` | string | yes | Room ID |
+| `roomName` | string | yes | Room name without leading `#` or `+` (username for DMs) |
 | `searchText` | string | yes | Text to search for |
 | `count` | number | no | Maximum number of results |
 | `offset` | number | no | Number of results to skip (pagination) |
@@ -221,52 +221,22 @@ Get all replies in a message thread.
 
 ### `send-message`
 
-Send a message to a channel or reply in a thread.
+Send a message to a room by name, or reply in a thread. Works for channels, groups, and DMs (pass the other user's username for DMs).
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
-| `roomId` | string | yes | Room ID |
+| `roomName` | string | yes | Room name without leading `#` or `+` (username for DMs) |
 | `message` | string | yes | Message text |
 | `tmid` | string | no | Parent message ID to reply in a thread |
 | `tshow` | boolean | no | If `true`, thread reply is also shown in the main channel |
 
-### `get-group-info`
+### `get-room-members`
 
-Resolve a private group name to its room ID and metadata.
-
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| `groupName` | string | yes | Private group name |
-
-### `get-group-messages`
-
-Get message history from a private group.
+List members of a public channel or private group by name. The room type is detected automatically.
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
-| `roomId` | string | yes | Private group room ID |
-| `count` | number | no | Number of messages to return (default: 20) |
-| `offset` | number | no | Number of messages to skip (pagination) |
-| `oldest` | string | no | ISO 8601 timestamp — only return messages after this date |
-| `latest` | string | no | ISO 8601 timestamp — only return messages before this date |
-
-### `get-group-members`
-
-List members of a private group.
-
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| `roomId` | string | yes | Private group room ID |
-| `count` | number | no | Number of members to return (default: 20) |
-| `offset` | number | no | Number of members to skip (pagination) |
-
-### `get-channel-members`
-
-List members of a public channel.
-
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| `roomId` | string | yes | Public channel room ID |
+| `roomName` | string | yes | Room name without leading `#` or `+` |
 | `count` | number | no | Number of members to return (default: 20) |
 | `offset` | number | no | Number of members to skip (pagination) |
 
@@ -292,13 +262,15 @@ Search the Rocket.Chat workspace directory for users or channels.
 
 ## Typical LLM Workflow
 
-1. **`get-channel-info`** or **`get-group-info`** — resolve a channel/group name → `roomId`
-2. **`list-rooms`** — discover all joined rooms (channels, groups, DMs)
-3. **`search-directory`** — find users or channels by name across the workspace
-4. **`get-messages`** or **`get-group-messages`** — read recent messages
-5. **`search-messages`** — find specific content
-6. **`get-thread-messages`** — read a thread conversation
-7. **`get-group-members`** or **`get-channel-members`** — see who is in a room
+All tools accept a **room name** and resolve the room internally — no separate ID lookup step is needed.
+
+1. **`list-rooms`** — discover all joined rooms (channels, groups, DMs)
+2. **`search-directory`** — find users or channels by name across the workspace
+3. **`get-room-messages`** — read recent messages (channels and groups)
+4. **`search-messages`** — find specific content
+5. **`get-thread-messages`** — read a thread conversation
+6. **`get-room-members`** — see who is in a room
+7. **`get-room-info`** — inspect room metadata (topic, description, member count)
 8. **`send-message`** — reply (optionally in a thread via `tmid`)
 
 ## Docker

@@ -44,10 +44,11 @@ describe("MCP server (integration)", () => {
   });
 
   describe("send-message tool", () => {
-    it("sends a message and returns the message text", async () => {
+    it("sends a message by room name and returns the message text", async () => {
+      const channelName = inject("channelName");
       const result = await mcpClient.callTool({
         name: "send-message",
-        arguments: { roomId: channelId, message: "mcp e2e test message" },
+        arguments: { roomName: channelName, message: "mcp e2e test message" },
       });
 
       expect(result.isError).toBeFalsy();
@@ -60,18 +61,19 @@ describe("MCP server (integration)", () => {
     it("returns isError=true for a non-existent room", async () => {
       const result = await mcpClient.callTool({
         name: "send-message",
-        arguments: { roomId: "__nonexistent__", message: "should fail" },
+        arguments: { roomName: "__nonexistent__", message: "should fail" },
       });
 
       expect(result.isError).toBe(true);
     });
   });
 
-  describe("get-messages tool", () => {
-    it("retrieves messages from a channel", async () => {
+  describe("get-room-messages tool", () => {
+    it("retrieves messages from a channel by name", async () => {
+      const channelName = inject("channelName");
       const result = await mcpClient.callTool({
-        name: "get-messages",
-        arguments: { roomId: channelId },
+        name: "get-room-messages",
+        arguments: { roomName: channelName },
       });
 
       expect(result.isError).toBeFalsy();
@@ -81,10 +83,23 @@ describe("MCP server (integration)", () => {
       expect(parsed.length).toBeGreaterThan(0);
     });
 
-    it("returns isError=true for an invalid room ID", async () => {
+    it("retrieves messages from a group by name", async () => {
+      const groupName = inject("groupName");
       const result = await mcpClient.callTool({
-        name: "get-messages",
-        arguments: { roomId: "__invalid__" },
+        name: "get-room-messages",
+        arguments: { roomName: groupName },
+      });
+
+      expect(result.isError).toBeFalsy();
+      const text = (result.content[0] as { type: string; text: string }).text;
+      const parsed = JSON.parse(text) as unknown[];
+      expect(Array.isArray(parsed)).toBe(true);
+    });
+
+    it("returns isError=true for a non-existent room", async () => {
+      const result = await mcpClient.callTool({
+        name: "get-room-messages",
+        arguments: { roomName: "__invalid__" },
       });
 
       expect(result.isError).toBe(true);
@@ -93,9 +108,10 @@ describe("MCP server (integration)", () => {
 
   describe("search-messages tool", () => {
     it("returns messages matching the search text", async () => {
+      const channelName = inject("channelName");
       const result = await mcpClient.callTool({
         name: "search-messages",
-        arguments: { roomId: channelId, searchText: "integration test" },
+        arguments: { roomName: channelName, searchText: "integration test" },
       });
 
       expect(result.isError).toBeFalsy();
@@ -136,12 +152,12 @@ describe("MCP server (integration)", () => {
     });
   });
 
-  describe("get-group-members tool", () => {
+  describe("get-room-members tool", () => {
     it("returns members of the test group including the admin", async () => {
-      const groupId = inject("groupId");
+      const groupName = inject("groupName");
       const result = await mcpClient.callTool({
-        name: "get-group-members",
-        arguments: { roomId: groupId },
+        name: "get-room-members",
+        arguments: { roomName: groupName },
       });
 
       expect(result.isError).toBeFalsy();
@@ -156,46 +172,24 @@ describe("MCP server (integration)", () => {
     it("sends a message to a channel by name", async () => {
       const channelName = inject("channelName");
 
-      // Step 1: resolve channel name to room ID
-      const roomResult = await mcpClient.callTool({
-        name: "get-room-info",
-        arguments: { roomName: channelName },
-      });
-      expect(roomResult.isError).toBeFalsy();
-      const room = JSON.parse(
-        (roomResult.content[0] as { type: string; text: string }).text
-      ) as { _id: string };
-
-      // Step 2: send message using the resolved room ID
       const sendResult = await mcpClient.callTool({
         name: "send-message",
-        arguments: { roomId: room._id, message: "e2e workflow test" },
+        arguments: { roomName: channelName, message: "e2e workflow test" },
       });
       expect(sendResult.isError).toBeFalsy();
       const sent = JSON.parse(
         (sendResult.content[0] as { type: string; text: string }).text
       ) as { msg: string; rid: string };
       expect(sent.msg).toBe("e2e workflow test");
-      expect(sent.rid).toBe(room._id);
+      expect(sent.rid).toBe(channelId);
     });
 
     it("reads message history by channel name", async () => {
       const channelName = inject("channelName");
 
-      // Step 1: resolve channel name to room ID
-      const roomResult = await mcpClient.callTool({
-        name: "get-room-info",
-        arguments: { roomName: channelName },
-      });
-      expect(roomResult.isError).toBeFalsy();
-      const room = JSON.parse(
-        (roomResult.content[0] as { type: string; text: string }).text
-      ) as { _id: string };
-
-      // Step 2: fetch messages using the resolved room ID
       const msgResult = await mcpClient.callTool({
-        name: "get-messages",
-        arguments: { roomId: room._id },
+        name: "get-room-messages",
+        arguments: { roomName: channelName },
       });
       expect(msgResult.isError).toBeFalsy();
       const messages = JSON.parse(
@@ -207,20 +201,9 @@ describe("MCP server (integration)", () => {
     it("lists channel members by name", async () => {
       const channelName = inject("channelName");
 
-      // Step 1: resolve channel name to room ID
-      const roomResult = await mcpClient.callTool({
-        name: "get-room-info",
-        arguments: { roomName: channelName },
-      });
-      expect(roomResult.isError).toBeFalsy();
-      const room = JSON.parse(
-        (roomResult.content[0] as { type: string; text: string }).text
-      ) as { _id: string };
-
-      // Step 2: list members using the resolved room ID
       const membersResult = await mcpClient.callTool({
-        name: "get-channel-members",
-        arguments: { roomId: room._id },
+        name: "get-room-members",
+        arguments: { roomName: channelName },
       });
       expect(membersResult.isError).toBeFalsy();
       const members = JSON.parse(
@@ -246,23 +229,11 @@ describe("MCP server (integration)", () => {
       const match = channels.find((c) => c.name === channelName);
       if (!match) throw new Error(`Channel ${channelName} not found in directory`);
 
-      // Step 2: resolve the exact name to get the room ID
-      const roomResult = await mcpClient.callTool({
-        name: "get-room-info",
-        arguments: { roomName: match.name },
-      });
-      expect(roomResult.isError).toBeFalsy();
-      const room = JSON.parse(
-        (roomResult.content[0] as { type: string; text: string }).text
-      ) as { _id: string; t: string };
-      expect(room._id).toBe(inject("channelId"));
-      expect(room.t).toBe("c");
-
-      // Step 3: send a message using the resolved room ID
+      // Step 2: send a message using the discovered name
       const sendResult = await mcpClient.callTool({
         name: "send-message",
         arguments: {
-          roomId: room._id,
+          roomName: match.name,
           message: "e2e search-directory workflow",
         },
       });
@@ -271,7 +242,7 @@ describe("MCP server (integration)", () => {
         (sendResult.content[0] as { type: string; text: string }).text
       ) as { msg: string; rid: string };
       expect(sent.msg).toBe("e2e search-directory workflow");
-      expect(sent.rid).toBe(room._id);
+      expect(sent.rid).toBe(inject("channelId"));
     });
   });
 });

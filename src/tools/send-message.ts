@@ -10,12 +10,12 @@ export function registerSendMessage(
     "send-message",
     {
       description:
-        "Send a message to a Rocket.Chat room by its room ID. Use get-room-info first to resolve a channel/group/DM name to a room ID.",
+        "Send a message to a Rocket.Chat room by name. Works for public channels, private groups, and DMs (pass the other user's username as roomName). The room is resolved internally, so no separate get-room-info call is needed. If unsure about the exact name casing, use search-directory first.",
       inputSchema: {
-        roomId: z
+        roomName: z
           .string()
           .describe(
-            "The room ID to send the message to (use get-room-info to resolve a channel name to an ID)"
+            "The exact room name to send to (case-sensitive, without leading # or +). For DMs, use the other user's username. If unsure about casing, use search-directory first."
           ),
         message: z.string().describe("The message text to send"),
         tmid: z
@@ -30,9 +30,10 @@ export function registerSendMessage(
           ),
       },
     },
-    async ({ roomId, message, tmid, tshow }) => {
+    async ({ roomName, message, tmid, tshow }) => {
       try {
-        const result = await client.sendMessage(roomId, message, {
+        const info = await client.getRoomInfo(roomName);
+        const result = await client.sendMessage(info.room._id, message, {
           tmid,
           tshow,
         });

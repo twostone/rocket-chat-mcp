@@ -16,13 +16,11 @@ src/
 ├── index.ts              # Entry point — creates McpServer, registers tools, connects StreamableHTTPServerTransport
 ├── tools/                # One file per tool or related group
 │   ├── send-message.ts
-│   ├── get-messages.ts
+│   ├── get-room-messages.ts
 │   ├── get-thread-messages.ts
 │   ├── search-messages.ts
 │   ├── get-room-info.ts
-│   ├── get-group-messages.ts
-│   ├── get-group-members.ts
-│   ├── get-channel-members.ts
+│   ├── get-room-members.ts
 │   ├── list-rooms.ts
 │   └── search-directory.ts
 ├── client/
@@ -31,13 +29,11 @@ src/
 tests/                    # Mirrors src/ structure
 ├── tools/
 │   ├── send-message.test.ts
-│   ├── get-messages.test.ts
+│   ├── get-room-messages.test.ts
 │   ├── get-thread-messages.test.ts
 │   ├── search-messages.test.ts
 │   ├── get-room-info.test.ts
-│   ├── get-group-messages.test.ts
-│   ├── get-group-members.test.ts
-│   ├── get-channel-members.test.ts
+│   ├── get-room-members.test.ts
 │   ├── list-rooms.test.ts
 │   └── search-directory.test.ts
 └── client/
@@ -111,10 +107,9 @@ The `Dockerfile` uses a multi-stage build (install + build in `node:22`, copy in
 - **Rocket.Chat REST API v1** — base URL from `ROCKETCHAT_URL` env var
   - `POST /api/v1/chat.sendMessage` — send messages (requires `rid` + `msg`; optional `tmid` for thread replies)
   - `GET /api/v1/channels.history` — read channel history (`roomId`, pagination, `oldest`/`latest` date filters)
-  - `GET /api/v1/channels.info` — resolve channel name to room ID (`roomName`)
+  - `GET /api/v1/rooms.info` — resolve room name to room ID and type (`roomName`; works for channels, groups, and DMs)
   - `GET /api/v1/chat.search` — full-text search (`roomId` + `searchText`, pagination with `count`/`offset`)
   - `GET /api/v1/chat.getThreadMessages` — get all replies in a thread (`tmid`, pagination)
-  - `GET /api/v1/groups.info` — resolve private group name to room ID (`roomName`)
   - `GET /api/v1/groups.history` — read private group message history (`roomId`, pagination, date filters)
   - `GET /api/v1/groups.members` — list members of a private group (`roomId`, pagination)
   - `GET /api/v1/channels.members` — list members of a public channel (`roomId`, pagination)
@@ -130,25 +125,20 @@ The `Dockerfile` uses a multi-stage build (install + build in `node:22`, copy in
 
 ## Common Agent Workflows
 
-Most tools require a **room ID** rather than a room name. Use `get-room-info` to resolve a name first.
+All tools accept a **room name** and resolve the room ID (and type, where needed) internally — no separate `get-room-info` call is required. For DMs, pass the other user's username as the room name.
 
 ### Send a message to a channel by name
-1. `get-room-info({ roomName: "general" })` → extract `_id` from the response
-2. `send-message({ roomId: "<_id>", message: "Hello!" })`
+- `send-message({ roomName: "general", message: "Hello!" })` — works for channels, groups, and DMs
 
-### Read channel history by name
-1. `get-room-info({ roomName: "general" })` → extract `_id` and `t` (room type)
-2. If `t` is `"c"` (public channel): `get-messages({ roomId: "<_id>" })`
-3. If `t` is `"p"` (private group): `get-group-messages({ roomId: "<_id>" })`
+### Read room history by name
+- `get-room-messages({ roomName: "general" })` — works for both public channels and private groups; the room type is detected automatically
 
-### List channel members by name
-1. `get-room-info({ roomName: "general" })` → extract `_id` and check `t` field
-2. If `t` is `"c"` (public channel): `get-channel-members({ roomId: "<_id>" })`
-3. If `t` is `"p"` (private group): `get-group-members({ roomId: "<_id>" })`
+### List room members by name
+- `get-room-members({ roomName: "general" })` — works for both public channels and private groups; the room type is detected automatically
 
 ### Reply to a thread
-1. `get-messages({ roomId: "<roomId>" })` or `search-messages(...)` → find the parent message and extract its `_id`
-2. `send-message({ roomId: "<roomId>", message: "reply text", tmid: "<parent _id>" })`
+1. `get-room-messages({ roomName: "general" })` or `search-messages(...)` → find the parent message and extract its `_id`
+2. `send-message({ roomName: "general", message: "reply text", tmid: "<parent _id>" })`
 
 ### Discover available channels
 - `list-rooms({})` — returns all rooms the authenticated user has joined (each with `_id` and `name`)
