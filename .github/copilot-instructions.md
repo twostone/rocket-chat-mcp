@@ -125,11 +125,10 @@ The `Dockerfile` uses a multi-stage build (install + build in `node:22`, copy in
 
 ## Common Agent Workflows
 
-Reading tools (`get-room-messages`, `get-room-members`) accept a **room name** and resolve the room ID and type internally. Write tools (`send-message`, `search-messages`) require a **room ID** — use `get-room-info` to resolve a name first.
+All tools accept a **room name** and resolve the room ID (and type, where needed) internally — no separate `get-room-info` call is required. For DMs, pass the other user's username as the room name.
 
 ### Send a message to a channel by name
-1. `get-room-info({ roomName: "general" })` → extract `_id` from the response
-2. `send-message({ roomId: "<_id>", message: "Hello!" })`
+- `send-message({ roomName: "general", message: "Hello!" })` — works for channels, groups, and DMs
 
 ### Read room history by name
 - `get-room-messages({ roomName: "general" })` — works for both public channels and private groups; the room type is detected automatically
@@ -139,7 +138,7 @@ Reading tools (`get-room-messages`, `get-room-members`) accept a **room name** a
 
 ### Reply to a thread
 1. `get-room-messages({ roomName: "general" })` or `search-messages(...)` → find the parent message and extract its `_id`
-2. `send-message({ roomId: "<roomId>", message: "reply text", tmid: "<parent _id>" })`
+2. `send-message({ roomName: "general", message: "reply text", tmid: "<parent _id>" })`
 
 ### Discover available channels
 - `list-rooms({})` — returns all rooms the authenticated user has joined (each with `_id` and `name`)

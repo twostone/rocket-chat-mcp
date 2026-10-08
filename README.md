@@ -180,7 +180,7 @@ Use the pre-built multi-arch image (amd64 + arm64) from GHCR directly as the MCP
 
 ### `get-room-info`
 
-Resolve a room name to its room ID and metadata. Use this first to get the `roomId` needed by other tools. Works for channels, groups, and DMs.
+Resolve a room name to its room ID and metadata (topic, description, member count). Works for channels, groups, and DMs.
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
@@ -200,11 +200,11 @@ Get message history from a public channel or private group by name. The room typ
 
 ### `search-messages`
 
-Full-text search for messages in a channel.
+Full-text search for messages in a room by name. Works for channels, groups, and DMs.
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
-| `roomId` | string | yes | Room ID |
+| `roomName` | string | yes | Room name without leading `#` or `+` (username for DMs) |
 | `searchText` | string | yes | Text to search for |
 | `count` | number | no | Maximum number of results |
 | `offset` | number | no | Number of results to skip (pagination) |
@@ -221,11 +221,11 @@ Get all replies in a message thread.
 
 ### `send-message`
 
-Send a message to a channel or reply in a thread.
+Send a message to a room by name, or reply in a thread. Works for channels, groups, and DMs (pass the other user's username for DMs).
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
-| `roomId` | string | yes | Room ID |
+| `roomName` | string | yes | Room name without leading `#` or `+` (username for DMs) |
 | `message` | string | yes | Message text |
 | `tmid` | string | no | Parent message ID to reply in a thread |
 | `tshow` | boolean | no | If `true`, thread reply is also shown in the main channel |
@@ -262,13 +262,15 @@ Search the Rocket.Chat workspace directory for users or channels.
 
 ## Typical LLM Workflow
 
-1. **`get-room-info`** — resolve a room name → `roomId` (needed by `send-message` and `search-messages`)
-2. **`list-rooms`** — discover all joined rooms (channels, groups, DMs)
-3. **`search-directory`** — find users or channels by name across the workspace
-4. **`get-room-messages`** — read recent messages (channels and groups)
-5. **`search-messages`** — find specific content
-6. **`get-thread-messages`** — read a thread conversation
-7. **`get-room-members`** — see who is in a room
+All tools accept a **room name** and resolve the room internally — no separate ID lookup step is needed.
+
+1. **`list-rooms`** — discover all joined rooms (channels, groups, DMs)
+2. **`search-directory`** — find users or channels by name across the workspace
+3. **`get-room-messages`** — read recent messages (channels and groups)
+4. **`search-messages`** — find specific content
+5. **`get-thread-messages`** — read a thread conversation
+6. **`get-room-members`** — see who is in a room
+7. **`get-room-info`** — inspect room metadata (topic, description, member count)
 8. **`send-message`** — reply (optionally in a thread via `tmid`)
 
 ## Docker

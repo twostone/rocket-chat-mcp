@@ -10,12 +10,12 @@ export function registerSearchMessages(
     "search-messages",
     {
       description:
-        "Search for messages in a Rocket.Chat channel by text. Requires a room ID — use get-room-info to resolve a channel name.",
+        "Search for messages in a Rocket.Chat room by text. Works for public channels, private groups, and DMs — the room is resolved internally from the name, so no separate get-room-info call is needed. If unsure about the exact name casing, use search-directory first.",
       inputSchema: {
-        roomId: z
+        roomName: z
           .string()
           .describe(
-            "The room ID to search in (use get-room-info to resolve a channel name)"
+            "The exact room name to search in (case-sensitive, without leading # or +). For DMs, use the other user's username. If unsure about casing, use search-directory first."
           ),
         searchText: z.string().describe("The text to search for"),
         count: z
@@ -28,9 +28,15 @@ export function registerSearchMessages(
           .describe("Number of results to skip for pagination"),
       },
     },
-    async ({ roomId, searchText, count, offset }) => {
+    async ({ roomName, searchText, count, offset }) => {
       try {
-        const result = await client.searchMessages(roomId, searchText, count, offset);
+        const info = await client.getRoomInfo(roomName);
+        const result = await client.searchMessages(
+          info.room._id,
+          searchText,
+          count,
+          offset
+        );
         return {
           content: [
             {

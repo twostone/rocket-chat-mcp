@@ -10,7 +10,7 @@ export function registerGetRoomInfo(
     "get-room-info",
     {
       description:
-        "Resolve a Rocket.Chat room name to its room ID and metadata. Returns a room object with _id (the room ID needed by send-message, search-messages, and other tools), name, type (t), usersCount, topic, and description. Works for channels, groups, and DMs.",
+        "Resolve a Rocket.Chat room name to its room ID and metadata. Returns a room object with _id, name, type (t), usersCount, topic, and description. Works for channels, groups, and DMs. Use this to inspect room metadata; the other tools accept room names directly and resolve rooms internally.",
       inputSchema: {
         roomName: z
           .string()
