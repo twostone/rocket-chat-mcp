@@ -1,3 +1,10 @@
+# [0.3.0](https://github.com/twostone/rocket-chat-mcp/compare/v0.2.1...v0.3.0) (2026-10-08)
+
+
+### Features
+
+* name-based room tools (combined read tools + send/search by name) ([#26](https://github.com/twostone/rocket-chat-mcp/issues/26)) ([6aa4a37](https://github.com/twostone/rocket-chat-mcp/commit/6aa4a376ad49aa2b57162e24fe78e8a2ec9e6b31))
+
 ## [0.2.1](https://github.com/twostone/rocket-chat-mcp/compare/v0.2.0...v0.2.1) (2026-10-08)
 
 
