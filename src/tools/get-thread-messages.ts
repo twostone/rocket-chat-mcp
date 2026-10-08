@@ -10,7 +10,7 @@ export function registerGetThreadMessages(
     "get-thread-messages",
     {
       description:
-        "Get all replies in a Rocket.Chat message thread. Requires the parent message ID (tmid), which can be found in message objects returned by get-messages or search-messages.",
+        "Get all replies in a Rocket.Chat message thread. Requires the parent message ID (tmid), which can be found in message objects returned by get-room-messages or search-messages.",
       inputSchema: {
         tmid: z.string().describe("The ID of the parent message (thread)"),
         count: z

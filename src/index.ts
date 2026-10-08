@@ -11,13 +11,11 @@ import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { RocketChatClient } from "./client/rocketchat.js";
 import { getConfigFromEnv } from "./types.js";
 import { registerSendMessage } from "./tools/send-message.js";
-import { registerGetMessages } from "./tools/get-messages.js";
+import { registerGetRoomMessages } from "./tools/get-room-messages.js";
 import { registerSearchMessages } from "./tools/search-messages.js";
 import { registerGetRoomInfo } from "./tools/get-room-info.js";
 import { registerGetThreadMessages } from "./tools/get-thread-messages.js";
-import { registerGetGroupMessages } from "./tools/get-group-messages.js";
-import { registerGetGroupMembers } from "./tools/get-group-members.js";
-import { registerGetChannelMembers } from "./tools/get-channel-members.js";
+import { registerGetRoomMembers } from "./tools/get-room-members.js";
 import { registerListRooms } from "./tools/list-rooms.js";
 import { registerSearchDirectory } from "./tools/search-directory.js";
 
@@ -28,13 +26,11 @@ export function createServer(client: RocketChatClient): McpServer {
   });
 
   registerSendMessage(server, client);
-  registerGetMessages(server, client);
+  registerGetRoomMessages(server, client);
   registerSearchMessages(server, client);
   registerGetRoomInfo(server, client);
   registerGetThreadMessages(server, client);
-  registerGetGroupMessages(server, client);
-  registerGetGroupMembers(server, client);
-  registerGetChannelMembers(server, client);
+  registerGetRoomMembers(server, client);
   registerListRooms(server, client);
   registerSearchDirectory(server, client);
 
