@@ -1,3 +1,10 @@
+## [0.2.1](https://github.com/twostone/rocket-chat-mcp/compare/v0.2.0...v0.2.1) (2026-10-08)
+
+
+### Bug Fixes
+
+* **renovate:** use packageRules instead of invalid groups option ([#29](https://github.com/twostone/rocket-chat-mcp/issues/29)) ([bc65580](https://github.com/twostone/rocket-chat-mcp/commit/bc65580dab4c3e7d8c9e95fbb4b43bd620153293))
+
 # [0.2.0](https://github.com/TwoStone/rocket-chat-mcp/compare/v0.1.0...v0.2.0) (2026-04-08)
 
 
