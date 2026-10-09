@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM node:22 AS builder
+FROM node:24 AS builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
@@ -8,7 +8,7 @@ COPY src ./src
 RUN npm run build
 
 # Stage 2: Runtime
-FROM node:22-slim
+FROM node:24-slim
 WORKDIR /app
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/node_modules ./node_modules
