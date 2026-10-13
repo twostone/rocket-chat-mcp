@@ -62,6 +62,7 @@ describe("get-thread-messages tool", () => {
       content: [
         { type: "text", text: JSON.stringify(mockMessages, null, 2) },
       ],
+      structuredContent: mockMessages,
     });
   });
 

@@ -71,6 +71,7 @@ describe("get-room-messages tool", () => {
       content: [
         { type: "text", text: JSON.stringify(mockMessages, null, 2) },
       ],
+      structuredContent: mockMessages,
     });
   });
 
@@ -107,6 +108,7 @@ describe("get-room-messages tool", () => {
       content: [
         { type: "text", text: JSON.stringify(mockMessages, null, 2) },
       ],
+      structuredContent: mockMessages,
     });
   });
 

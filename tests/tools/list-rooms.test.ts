@@ -53,6 +53,7 @@ describe("list-rooms tool", () => {
       content: [
         { type: "text", text: JSON.stringify(mockRooms, null, 2) },
       ],
+      structuredContent: mockRooms,
     });
   });
 

@@ -63,6 +63,7 @@ describe("get-room-members tool", () => {
       content: [
         { type: "text", text: JSON.stringify(mockMembers, null, 2) },
       ],
+      structuredContent: mockMembers,
     });
   });
 
@@ -91,6 +92,7 @@ describe("get-room-members tool", () => {
       content: [
         { type: "text", text: JSON.stringify(mockMembers, null, 2) },
       ],
+      structuredContent: mockMembers,
     });
   });
 
