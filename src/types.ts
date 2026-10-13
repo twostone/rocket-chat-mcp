@@ -32,8 +32,9 @@ export type MessagesResponse = z.infer<typeof MessagesResponseSchema>;
 
 export const RoomInfoSchema = z.object({
   _id: z.string(),
-  name: z.string(),
+  name: z.string().optional(),
   t: z.string().optional(),
+  usernames: z.array(z.string()).optional(),
   usersCount: z.number().optional(),
   topic: z.string().optional(),
   description: z.string().optional(),
