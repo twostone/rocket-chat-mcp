@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/server";
 import type { RocketChatClient } from "../client/rocketchat.js";
+import { RocketChatMessageSchema } from "../types.js";
 
 export function registerGetRoomMessages(
   server: McpServer,
@@ -9,31 +10,34 @@ export function registerGetRoomMessages(
   server.registerTool(
     "get-room-messages",
     {
+      title: "Get Room Messages",
       description:
         "Get message history from a Rocket.Chat room by name. Works for public channels (type 'c') and private groups (type 'p') — the room type is detected automatically, so no separate channel/group tool is needed. If unsure about the exact room name casing, use search-directory first.",
       inputSchema: z.object({
-              roomName: z
-                .string()
-                .describe(
-                  "The exact room name (case-sensitive, without leading # or +). If unsure about casing, use search-directory first to find the correct name."
-                ),
-              count: z
-                .number()
-                .optional()
-                .describe("Number of messages to return (default: 20)"),
-              offset: z
-                .number()
-                .optional()
-                .describe("Number of messages to skip for pagination"),
-              oldest: z
-                .string()
-                .optional()
-                .describe("ISO 8601 timestamp — only return messages after this date"),
-              latest: z
-                .string()
-                .optional()
-                .describe("ISO 8601 timestamp — only return messages before this date"),
-            }),
+        roomName: z
+          .string()
+          .describe(
+            "The exact room name (case-sensitive, without leading # or +). If unsure about casing, use search-directory first to find the correct name."
+          ),
+        count: z
+          .number()
+          .optional()
+          .describe("Number of messages to return (default: 20)"),
+        offset: z
+          .number()
+          .optional()
+          .describe("Number of messages to skip for pagination"),
+        oldest: z
+          .string()
+          .optional()
+          .describe("ISO 8601 timestamp — only return messages after this date"),
+        latest: z
+          .string()
+          .optional()
+          .describe("ISO 8601 timestamp — only return messages before this date"),
+      }),
+      outputSchema: z.array(RocketChatMessageSchema),
+      annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async ({ roomName, count, offset, oldest, latest }) => {
       try {
@@ -63,13 +67,15 @@ export function registerGetRoomMessages(
                 latest
               );
 
+        const messages = result.messages;
         return {
           content: [
             {
               type: "text" as const,
-              text: JSON.stringify(result.messages, null, 2),
+              text: JSON.stringify(messages, null, 2),
             },
           ],
+          structuredContent: messages,
         };
       } catch (error) {
         return {

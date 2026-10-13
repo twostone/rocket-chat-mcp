@@ -61,6 +61,7 @@ describe("search-directory tool", () => {
       content: [
         { type: "text", text: JSON.stringify(mockResults, null, 2) },
       ],
+      structuredContent: mockResults,
     });
   });
 
@@ -89,6 +90,7 @@ describe("search-directory tool", () => {
       content: [
         { type: "text", text: JSON.stringify(mockResults, null, 2) },
       ],
+      structuredContent: mockResults,
     });
   });
 

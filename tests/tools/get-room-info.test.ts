@@ -49,6 +49,7 @@ describe("get-room-info tool", () => {
       content: [
         { type: "text", text: JSON.stringify(mockRoom, null, 2) },
       ],
+      structuredContent: mockRoom,
     });
   });
 

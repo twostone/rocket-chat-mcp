@@ -65,6 +65,7 @@ describe("send-message tool", () => {
       content: [
         { type: "text", text: JSON.stringify(mockMessage, null, 2) },
       ],
+      structuredContent: mockMessage,
     });
   });
 
@@ -95,6 +96,7 @@ describe("send-message tool", () => {
       content: [
         { type: "text", text: JSON.stringify(mockMessage, null, 2) },
       ],
+      structuredContent: mockMessage,
     });
   });
 
@@ -188,6 +190,7 @@ describe("send-message tool", () => {
       content: [
         { type: "text", text: JSON.stringify(mockMessage, null, 2) },
       ],
+      structuredContent: mockMessage,
     });
   });
 

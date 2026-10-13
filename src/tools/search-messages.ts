@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/server";
 import type { RocketChatClient } from "../client/rocketchat.js";
+import { RocketChatMessageSchema } from "../types.js";
 
 export function registerSearchMessages(
   server: McpServer,
@@ -9,24 +10,27 @@ export function registerSearchMessages(
   server.registerTool(
     "search-messages",
     {
+      title: "Search Messages",
       description:
         "Search for messages in a Rocket.Chat room by text. Works for public channels, private groups, and DMs — the room is resolved internally from the name, so no separate get-room-info call is needed. If unsure about the exact name casing, use search-directory first.",
       inputSchema: z.object({
-              roomName: z
-                .string()
-                .describe(
-                  "The exact room name to search in (case-sensitive, without leading # or +). For DMs, use the other user's username. If unsure about casing, use search-directory first."
-                ),
-              searchText: z.string().describe("The text to search for"),
-              count: z
-                .number()
-                .optional()
-                .describe("Maximum number of results to return"),
-              offset: z
-                .number()
-                .optional()
-                .describe("Number of results to skip for pagination"),
-            }),
+        roomName: z
+          .string()
+          .describe(
+            "The exact room name to search in (case-sensitive, without leading # or +). For DMs, use the other user's username. If unsure about casing, use search-directory first."
+          ),
+        searchText: z.string().describe("The text to search for"),
+        count: z
+          .number()
+          .optional()
+          .describe("Maximum number of results to return"),
+        offset: z
+          .number()
+          .optional()
+          .describe("Number of results to skip for pagination"),
+      }),
+      outputSchema: z.array(RocketChatMessageSchema),
+      annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async ({ roomName, searchText, count, offset }) => {
       try {
@@ -37,13 +41,15 @@ export function registerSearchMessages(
           count,
           offset
         );
+        const messages = result.messages;
         return {
           content: [
             {
               type: "text" as const,
-              text: JSON.stringify(result.messages, null, 2),
+              text: JSON.stringify(messages, null, 2),
             },
           ],
+          structuredContent: messages,
         };
       } catch (error) {
         return {

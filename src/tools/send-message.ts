@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/server";
 import type { RocketChatClient } from "../client/rocketchat.js";
+import { RocketChatMessageSchema } from "../types.js";
 
 export function registerSendMessage(
   server: McpServer,
@@ -9,26 +10,34 @@ export function registerSendMessage(
   server.registerTool(
     "send-message",
     {
+      title: "Send Message",
       description:
         "Send a message to a Rocket.Chat room by name. Works for public channels, private groups, and DMs (pass the other user's username as roomName). The room is resolved internally, so no separate get-room-info call is needed. If unsure about the exact name casing, use search-directory first.",
       inputSchema: z.object({
-              roomName: z
-                .string()
-                .describe(
-                  "The exact room name to send to (case-sensitive, without leading # or +). For DMs, use the other user's username. If unsure about casing, use search-directory first."
-                ),
-              message: z.string().describe("The message text to send"),
-              tmid: z
-                .string()
-                .optional()
-                .describe("Parent message ID to reply in a thread"),
-              tshow: z
-                .boolean()
-                .optional()
-                .describe(
-                  "If true, the thread reply is also shown in the main channel timeline"
-                ),
-            }),
+        roomName: z
+          .string()
+          .describe(
+            "The exact room name to send to (case-sensitive, without leading # or +). For DMs, use the other user's username. If unsure about casing, use search-directory first."
+          ),
+        message: z.string().describe("The message text to send"),
+        tmid: z
+          .string()
+          .optional()
+          .describe("Parent message ID to reply in a thread"),
+        tshow: z
+          .boolean()
+          .optional()
+          .describe(
+            "If true, the thread reply is also shown in the main channel timeline"
+          ),
+      }),
+      outputSchema: RocketChatMessageSchema,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
     },
     async ({ roomName, message, tmid, tshow }) => {
       try {
@@ -37,13 +46,15 @@ export function registerSendMessage(
           tmid,
           tshow,
         });
+        const sent = result.message;
         return {
           content: [
             {
               type: "text" as const,
-              text: JSON.stringify(result.message, null, 2),
+              text: JSON.stringify(sent, null, 2),
             },
           ],
+          structuredContent: sent,
         };
       } catch (error) {
         return {
