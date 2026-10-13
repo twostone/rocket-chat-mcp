@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import type { RocketChatClient } from "../client/rocketchat.js";
 
 export function registerGetRoomMembers(
@@ -11,21 +11,21 @@ export function registerGetRoomMembers(
     {
       description:
         "List members of a Rocket.Chat room by name. Works for public channels (type 'c') and private groups (type 'p') — the room type is detected automatically, so no separate channel/group tool is needed. If unsure about the exact room name casing, use search-directory first.",
-      inputSchema: {
-        roomName: z
-          .string()
-          .describe(
-            "The exact room name (case-sensitive, without leading # or +). If unsure about casing, use search-directory first to find the correct name."
-          ),
-        count: z
-          .number()
-          .optional()
-          .describe("Number of members to return (default: 20)"),
-        offset: z
-          .number()
-          .optional()
-          .describe("Number of members to skip for pagination"),
-      },
+      inputSchema: z.object({
+              roomName: z
+                .string()
+                .describe(
+                  "The exact room name (case-sensitive, without leading # or +). If unsure about casing, use search-directory first to find the correct name."
+                ),
+              count: z
+                .number()
+                .optional()
+                .describe("Number of members to return (default: 20)"),
+              offset: z
+                .number()
+                .optional()
+                .describe("Number of members to skip for pagination"),
+            }),
     },
     async ({ roomName, count, offset }) => {
       try {

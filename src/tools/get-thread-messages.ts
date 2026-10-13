@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import type { RocketChatClient } from "../client/rocketchat.js";
 
 export function registerGetThreadMessages(
@@ -11,17 +11,17 @@ export function registerGetThreadMessages(
     {
       description:
         "Get all replies in a Rocket.Chat message thread. Requires the parent message ID (tmid), which can be found in message objects returned by get-room-messages or search-messages.",
-      inputSchema: {
-        tmid: z.string().describe("The ID of the parent message (thread)"),
-        count: z
-          .number()
-          .optional()
-          .describe("Number of messages to return (default: 20)"),
-        offset: z
-          .number()
-          .optional()
-          .describe("Number of messages to skip for pagination"),
-      },
+      inputSchema: z.object({
+              tmid: z.string().describe("The ID of the parent message (thread)"),
+              count: z
+                .number()
+                .optional()
+                .describe("Number of messages to return (default: 20)"),
+              offset: z
+                .number()
+                .optional()
+                .describe("Number of messages to skip for pagination"),
+            }),
     },
     async ({ tmid, count, offset }) => {
       try {
