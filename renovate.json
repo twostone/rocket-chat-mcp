@@ -20,6 +20,11 @@
       "matchManagers": ["npm"],
       "matchDepTypes": ["devDependencies"],
       "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "description": "Skip typescript 7.0.x (unsupported by typescript-eslint, peer <6.1.0); allow 7.1 and above",
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<7.0.0 || >=7.1.0"
     }
   ]
 }
