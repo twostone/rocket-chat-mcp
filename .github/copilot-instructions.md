@@ -5,7 +5,7 @@ MCP (Model Context Protocol) server in TypeScript that exposes Rocket.Chat messa
 ## Architecture
 
 - **Transport**: Two modes selected at startup:
-  - **Streamable HTTP** (default) — `NodeStreamableHTTPServerTransport` from `@modelcontextprotocol/node`; server runs as a long-lived HTTP process; clients use a single `/mcp` endpoint
+  - **Streamable HTTP** (default) — `createMcpHandler` + `toNodeHandler` from the SDK, mounted on the single `/mcp` endpoint. Serving is stateless per request (protocol revision 2026-07-28 removed protocol sessions and the `Mcp-Session-Id` header); pre-2026 clients are answered via the handler's stateless legacy fallback
   - **stdio** (`--stdio` flag) — `StdioServerTransport`; client spawns the process and communicates over stdin/stdout
 - **SDK**: MCP TypeScript SDK v2 packages (`@modelcontextprotocol/server`, `@modelcontextprotocol/node`, `@modelcontextprotocol/client` for tests) with the `McpServer` high-level API
 - **Input validation**: Zod schemas wrapped in `z.object()` and passed to `server.registerTool()`
