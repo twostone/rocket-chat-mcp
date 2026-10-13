@@ -36,6 +36,8 @@ npm start
 
 The server starts on port `3000` by default. Set the `PORT` env var to change it.
 
+Optionally, set `ALLOWED_HOSTS` and/or `ALLOWED_ORIGINS` (comma-separated lists) to enable Host/Origin allowlist validation on the HTTP endpoint. Both are unset by default so container and ingress deployments work without configuration.
+
 ## Authentication
 
 This server authenticates with Rocket.Chat using personal access tokens (header-based auth). To generate a token:
