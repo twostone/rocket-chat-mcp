@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from "@modelcontextprotocol/server";
 import { RocketChatClient } from "../../src/client/rocketchat.js";
 import { registerGetRoomMembers } from "../../src/tools/get-room-members.js";
 

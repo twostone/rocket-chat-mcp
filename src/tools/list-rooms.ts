@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import type { RocketChatClient } from "../client/rocketchat.js";
 
 export function registerListRooms(
@@ -11,14 +11,14 @@ export function registerListRooms(
     {
       description:
         "List all joined rooms (public channels, private groups, and DMs) of the authenticated Rocket.Chat user. Each room includes _id (room ID) and name, usable with other tools like get-room-messages and send-message.",
-      inputSchema: {
-        updatedSince: z
-          .string()
-          .optional()
-          .describe(
-            "ISO 8601 date string to only return rooms updated since that date"
-          ),
-      },
+      inputSchema: z.object({
+              updatedSince: z
+                .string()
+                .optional()
+                .describe(
+                  "ISO 8601 date string to only return rooms updated since that date"
+                ),
+            }),
     },
     async ({ updatedSince }) => {
       try {

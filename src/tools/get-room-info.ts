@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import type { RocketChatClient } from "../client/rocketchat.js";
 
 export function registerGetRoomInfo(
@@ -11,13 +11,13 @@ export function registerGetRoomInfo(
     {
       description:
         "Resolve a Rocket.Chat room name to its room ID and metadata. Returns a room object with _id, name, type (t), usersCount, topic, and description. Works for channels, groups, and DMs. Use this to inspect room metadata; the other tools accept room names directly and resolve rooms internally.",
-      inputSchema: {
-        roomName: z
-          .string()
-          .describe(
-            "The exact room name to look up (case-sensitive, without leading #). If unsure about casing, use search-directory first to find the correct name."
-          ),
-      },
+      inputSchema: z.object({
+              roomName: z
+                .string()
+                .describe(
+                  "The exact room name to look up (case-sensitive, without leading #). If unsure about casing, use search-directory first to find the correct name."
+                ),
+            }),
     },
     async ({ roomName }) => {
       try {

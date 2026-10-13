@@ -4,10 +4,9 @@ import { randomUUID } from "node:crypto";
 import { pathToFileURL } from "node:url";
 import express from "express";
 import type { Application } from "express";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
+import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
+import { NodeStreamableHTTPServerTransport } from "@modelcontextprotocol/node";
+import { McpServer, isInitializeRequest } from "@modelcontextprotocol/server";
 import { RocketChatClient } from "./client/rocketchat.js";
 import { getConfigFromEnv } from "./types.js";
 import { registerSendMessage } from "./tools/send-message.js";
@@ -38,23 +37,23 @@ export function createServer(client: RocketChatClient): McpServer {
 }
 
 export function createExpressApp(client: RocketChatClient): Application {
-  const transports = new Map<string, StreamableHTTPServerTransport>();
+  const transports = new Map<string, NodeStreamableHTTPServerTransport>();
 
   const app = express();
   app.use(express.json());
 
   app.all("/mcp", async (req, res) => {
     const sessionId = req.headers["mcp-session-id"] as string | undefined;
-    let transport: StreamableHTTPServerTransport;
+    let transport: NodeStreamableHTTPServerTransport;
 
     if (sessionId && transports.has(sessionId)) {
-      transport = transports.get(sessionId) as StreamableHTTPServerTransport;
+      transport = transports.get(sessionId) as NodeStreamableHTTPServerTransport;
     } else if (
       !sessionId &&
       req.method === "POST" &&
       isInitializeRequest(req.body)
     ) {
-      transport = new StreamableHTTPServerTransport({
+      transport = new NodeStreamableHTTPServerTransport({
         sessionIdGenerator: () => randomUUID(),
         onsessioninitialized: (id) => {
           transports.set(id, transport);
