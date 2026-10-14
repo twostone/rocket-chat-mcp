@@ -22,7 +22,7 @@ describe("MCP server (integration)", () => {
       authToken: adminAuthToken,
     });
 
-    const app = createExpressApp(rcClient);
+    const app = await createExpressApp(rcClient);
 
     await new Promise<void>((resolve) => {
       httpServer = app.listen(0, resolve);
