@@ -10,6 +10,7 @@ An [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) server that 
 - Read thread conversations
 - Resolve room names to room IDs
 - List room members (channels and groups)
+- **Interactive message drafts** — the `draft-message` tool opens a Rocket.Chat-styled composer (an [MCP App](https://modelcontextprotocol.io/concepts/apps)) that previews the message exactly as Rocket.Chat will render it; the user reviews, edits, and sends or discards it
 - Two transport modes: **Streamable HTTP** (default) and **stdio** (`--stdio` flag)
 
 ## Prerequisites
@@ -51,6 +52,7 @@ This server authenticates with Rocket.Chat using personal access tokens (header-
 | `ROCKETCHAT_URL` | Base URL of your Rocket.Chat instance (e.g. `https://chat.example.com`) |
 | `ROCKETCHAT_USER_ID` | Your Rocket.Chat user ID |
 | `ROCKETCHAT_AUTH_TOKEN` | Your personal access token |
+| `REQUIRE_DRAFT_REVIEW` | Optional. Set to `true` to hide `send-message` from the model, so every outgoing message must go through the `draft-message` composer first. Only enforced by hosts that support MCP Apps (see below); other hosts ignore it. Default: off |
 
 ## Transport Modes
 
@@ -232,6 +234,16 @@ Send a message to a room by name, or reply in a thread. Works for channels, grou
 | `tmid` | string | no | Parent message ID to reply in a thread |
 | `tshow` | boolean | no | If `true`, thread reply is also shown in the main channel |
 
+### `draft-message`
+
+Prepare a message draft for human review. Resolves the room, the sender, and (for thread replies) the parent message, then returns a preview plus an interactive composer UI. **The message is not sent** — the user edits and confirms it in the composer, which calls `send-message` (or discards it). In MCP hosts that support [MCP Apps](https://modelcontextprotocol.io/concepts/apps) the result renders as the interactive composer; in other clients the tool simply returns a text preview.
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `roomName` | string | yes | Room name without leading `#` or `+` (username for DMs) |
+| `message` | string | yes | Proposed message text (Rocket.Chat markdown) |
+| `tmid` | string | no | Parent message ID when drafting a thread reply |
+
 ### `get-room-members`
 
 List members of a public channel or private group by name. The room type is detected automatically.
@@ -275,6 +287,19 @@ All tools accept a **room name** and resolve the room internally — no separate
 7. **`get-room-info`** — inspect room metadata (topic, description, member count)
 8. **`send-message`** — reply (optionally in a thread via `tmid`)
 
+For outbound messages that warrant a human eye, use **`draft-message`** instead of step 8 — the model proposes the text and the user makes the final call.
+
+## Message Composer (MCP App)
+
+The `draft-message` tool ships an interactive companion: a single-file React app (`build/ui/composer.html`) that is exposed as an MCP resource (`ui://rocket-chat/composer.html`) and rendered by any [MCP Apps](https://modelcontextprotocol.io/concepts/apps)-capable host when the tool is called.
+
+- **Rocket.Chat-faithful preview** — the draft is parsed with Rocket.Chat's own message parser (`@rocket.chat/message-parser`) and rendered with React components that mirror Rocket.Chat's presentation: bold/italic/strikethrough, inline and fenced code, links, headings, quotes, lists and task lists, `@user` / `#channel` mention chips, and `:shortcode:` emoji (mapped to Unicode from a bundled JoyPixels map; unknown/custom shortcodes stay as literal text).
+- **Editable** — the user edits the draft and presses **Send**, which calls the server's `send-message` tool, or **Discard**, which sends nothing. Both outcomes are reported back to the model via `updateModelContext`.
+- **Context** — the composer shows the resolved room, the sender (real Rocket.Chat avatar with an initials fallback), and, for thread replies, the parent message.
+- **Security** — the app runs in the host's sandbox with no Rocket.Chat credentials. Its CSP restricts network access to the configured Rocket.Chat origin (avatar images only); all scripts, styles, and emoji data are inlined into the single HTML file. Links open through the host's `openLink` API, and all user content is rendered as text nodes, never injected HTML.
+
+Hosts without MCP Apps support are unaffected: they see the plain text preview and structured output of the tool, and all other tools work exactly as before. The composer bundle is produced by `npm run build:ui` (Vite + single-file inlining) and is copied into the Docker image alongside the server.
+
 ## Docker
 
 ```bash
@@ -295,12 +320,16 @@ The Dockerfile uses a multi-stage build (build in `node:22`, run in `node:22-sli
 
 ```bash
 npm install              # Install dependencies
-npm run build            # Compile TypeScript → build/
-npm run watch            # Compile in watch mode
+npm run build            # Build composer UI (Vite) + compile TypeScript → build/
+npm run build:ui         # Build the composer UI alone (→ build/ui/composer.html)
+npm run watch            # Compile TypeScript in watch mode
 npx tsx src/index.ts     # Run without building (dev)
 npm test                 # Run tests (vitest)
 npm run test:watch       # Run tests in watch mode
 npm run test:coverage    # Run tests with coverage
+npm run test:integration # Run integration tests against a disposable Rocket.Chat (Docker)
 npm run lint             # ESLint check
 npm run lint:fix         # ESLint auto-fix
 ```
+
+The composer UI lives in `ui/` (Vite + React, bundled to a single `build/ui/composer.html`). It is type-checked separately: `npx tsc -p ui/tsconfig.json --noEmit`.
