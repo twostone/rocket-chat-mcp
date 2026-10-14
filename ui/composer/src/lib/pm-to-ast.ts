@@ -51,14 +51,13 @@ export function pmToAst(doc: PMDoc): Root {
     normalized.push(block);
     if (
       i < mapped.length - 1 &&
+      mapped[i + 1].type !== "LINE_BREAK" &&
       (block.type === "HEADING" || block.type === "CODE")
     ) {
       normalized.push({ type: "LINE_BREAK", value: undefined });
     }
   });
-  // Normalize away a doc-wide empty state: TipTap's initial doc is one empty
-  // paragraph, which maps to a lone LINE_BREAK; Rocket.Chat has no such
-  // message, so collapse it to nothing.
+  // A lone LINE_BREAK (the initial-document state) is no message at all.
   if (
     mapped.length === 1 &&
     mapped[0].type === "LINE_BREAK"
