@@ -22,7 +22,8 @@ src/
 │   ├── get-room-info.ts
 │   ├── get-room-members.ts
 │   ├── list-rooms.ts
-│   └── search-directory.ts
+│   ├── search-directory.ts
+│   └── draft-message.ts  # Registers the draft tool AND the composer UI resource (MCP App)
 ├── client/
 │   └── rocketchat.ts     # Typed Rocket.Chat HTTP client (auth, error handling)
 └── types.ts              # Shared Zod schemas and TS types
@@ -35,10 +36,35 @@ tests/                    # Mirrors src/ structure
 │   ├── get-room-info.test.ts
 │   ├── get-room-members.test.ts
 │   ├── list-rooms.test.ts
-│   └── search-directory.test.ts
+│   ├── search-directory.test.ts
+│   └── draft-message.test.ts
+├── ui/
+│   └── preview.test.tsx  # Composer renderer component tests (jsdom + Testing Library)
 └── client/
     └── rocketchat.test.ts
+ui/                       # Composer app (MCP App) — React, built by Vite into a single file
+├── tsconfig.json         # Separate tsconfig: JSX + DOM libs, `noEmit` (typecheck only)
+└── composer/
+    ├── index.html        # Entry template (Vite input)
+    ├── vite.config.ts    # Vite + react + single-file plugin → build/ui/composer.html
+    └── src/
+        ├── main.tsx      # ReactDOM entry (createRoot, no StrictMode)
+        ├── App.tsx       # useApp wiring: tool input/result → draft state, Send/Discard
+        ├── types.ts      # DraftPayload (shape of draft-message structuredContent)
+        ├── components/Preview.tsx  # AST → React renderer (Rocket.Chat presentation)
+        ├── lib/emoji-map.ts        # Bundled shortcode→Unicode map (generated, committed)
+        └── styles.css    # Rocket.Chat visual language, light/dark via CSS variables
 ```
+
+### Composer (MCP App)
+
+The `draft-message` tool carries `_meta.ui.resourceUri = "ui://rocket-chat/composer.html"`, tying it to the bundled single-file React app (registered via `registerAppResource` from `@modelcontextprotocol/ext-apps/server`). When an MCP-Apps-capable host calls the tool, it renders the app; hosts without apps support just get the text preview.
+
+- **View ↔ server**: the app gets the draft via `app.ontoolresult` (the tool's `structuredContent`) or `app.ontoolinput` (raw args) and sends by calling the server's `send-message` tool through `app.callServerTool`. The server never exposes the Rocket.Chat token to the iframe.
+- **Rendering**: `@rocket.chat/message-parser` produces the same AST Rocket.Chat uses; `Preview.tsx` renders each node type. Emoji shortcodes map to Unicode via the bundled `emoji-map.ts`; unknown shortcodes stay as literal `:code:` text.
+- **CSP**: set on the resource's `resources/read` result (`_meta.ui.csp.resourceDomains`), limited to the configured `ROCKETCHAT_URL` origin so only avatar images load externally. All JS/CSS/emoji data are inlined into `composer.html`.
+- **Path**: `loadComposerHtml()` in `index.ts` locates `build/ui/composer.html` (compiled layout) or `src/../build/ui/composer.html` (dev/vitest). If absent, the composer is simply not advertised (`_meta.ui` stays empty) — the tool still works as a plain text preview.
+- **`REQUIRE_DRAFT_REVIEW`** (env, default off): when set, `send-message` is registered with `_meta.ui.visibility: ["app"]` so only the composer (server-side app) can send — the model must route every message through `draft-message`. Non-apps hosts ignore `_meta`, so this degrades to advisory.
 
 ## Code Style
 
