@@ -1,3 +1,10 @@
+## [0.4.1](https://github.com/twostone/rocket-chat-mcp/compare/v0.4.0...v0.4.1) (2026-10-14)
+
+
+### Bug Fixes
+
+* **deps:** update dependency [@rocket](https://github.com/rocket).chat/message-parser to ^0.32.0 ([2e7c6ed](https://github.com/twostone/rocket-chat-mcp/commit/2e7c6edd79f445cc308bbd7655b313f32ccd6176))
+
 # [0.4.0](https://github.com/twostone/rocket-chat-mcp/compare/v0.3.0...v0.4.0) (2026-10-14)
 
 
