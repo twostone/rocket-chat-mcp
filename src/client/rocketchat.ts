@@ -1,5 +1,6 @@
 import type {
   RocketChatConfig,
+  RocketChatMessage,
   SendMessageResponse,
   MessagesResponse,
   RoomInfoResponse,
@@ -7,6 +8,7 @@ import type {
   ChannelMembersResponse,
   RoomsGetResponse,
   DirectoryResponse,
+  MeResponse,
 } from "../types.js";
 
 export interface SendMessageOptions {
@@ -15,10 +17,12 @@ export interface SendMessageOptions {
 }
 
 export class RocketChatClient {
+  readonly config: RocketChatConfig;
   private readonly baseUrl: string;
   private readonly headers: Record<string, string>;
 
   constructor(config: RocketChatConfig) {
+    this.config = config;
     this.baseUrl = `${config.url.replace(/\/+$/, "")}/api/v1`;
     this.headers = {
       "Content-Type": "application/json",
@@ -279,5 +283,40 @@ export class RocketChatClient {
     }
 
     return (await response.json()) as RoomsGetResponse;
+  }
+
+  async getMe(): Promise<MeResponse> {
+    const response = await fetch(`${this.baseUrl}/me`, {
+      method: "GET",
+      headers: this.headers,
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(
+        `Rocket.Chat API error (${response.status}): ${text}`
+      );
+    }
+
+    return (await response.json()) as MeResponse;
+  }
+
+  async getMessage(msgId: string): Promise<RocketChatMessage> {
+    const params = new URLSearchParams({ msgId });
+
+    const response = await fetch(
+      `${this.baseUrl}/chat.getMessage?${params.toString()}`,
+      { method: "GET", headers: this.headers }
+    );
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(
+        `Rocket.Chat API error (${response.status}): ${text}`
+      );
+    }
+
+    const body = (await response.json()) as { message: RocketChatMessage };
+    return body.message;
   }
 }
