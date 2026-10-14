@@ -108,6 +108,52 @@ export interface RocketChatConfig {
   authToken: string;
 }
 
+export const MeResponseSchema = z.object({
+  _id: z.string(),
+  username: z.string(),
+  name: z.string().nullable().optional(),
+  avatarEtags: z.record(z.string(), z.unknown()).optional(),
+  success: z.boolean(),
+});
+
+export type MeResponse = z.infer<typeof MeResponseSchema>;
+
+export const DraftRoomSchema = z.object({
+  displayName: z.string(),
+  kind: z.enum(["channel", "group", "dm"]),
+});
+
+export type DraftRoom = z.infer<typeof DraftRoomSchema>;
+
+export const DraftUserSchema = z.object({
+  username: z.string(),
+  name: z.string().nullable(),
+  avatarUrl: z.string().nullable(),
+});
+
+export type DraftUser = z.infer<typeof DraftUserSchema>;
+
+export const DraftParentSchema = z.object({
+  username: z.string(),
+  name: z.string().nullable(),
+  avatarUrl: z.string().nullable(),
+  message: z.string(),
+  ts: z.string().optional(),
+});
+
+export type DraftParent = z.infer<typeof DraftParentSchema>;
+
+export const DraftMessageSchema = z.object({
+  roomName: z.string(),
+  room: DraftRoomSchema,
+  sender: DraftUserSchema,
+  parent: DraftParentSchema.optional(),
+  tmid: z.string().optional(),
+  message: z.string(),
+});
+
+export type DraftMessage = z.infer<typeof DraftMessageSchema>;
+
 export function getConfigFromEnv(): RocketChatConfig {
   const url = process.env.ROCKETCHAT_URL;
   const userId = process.env.ROCKETCHAT_USER_ID;

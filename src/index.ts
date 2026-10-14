@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { pathToFileURL } from "node:url";
+import { readFile } from "node:fs/promises";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import express from "express";
 import type { Application } from "express";
 import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
@@ -21,23 +22,30 @@ import { registerGetThreadMessages } from "./tools/get-thread-messages.js";
 import { registerGetRoomMembers } from "./tools/get-room-members.js";
 import { registerListRooms } from "./tools/list-rooms.js";
 import { registerSearchDirectory } from "./tools/search-directory.js";
+import { registerDraftMessage } from "./tools/draft-message.js";
 
-export function createServer(client: RocketChatClient): McpServer {
-  const server = new McpServer({
-    name: "rocket-chat-mcp",
-    version: "1.0.0",
-  });
-
-  registerSendMessage(server, client);
-  registerGetRoomMessages(server, client);
-  registerSearchMessages(server, client);
-  registerGetRoomInfo(server, client);
-  registerGetThreadMessages(server, client);
-  registerGetRoomMembers(server, client);
-  registerListRooms(server, client);
-  registerSearchDirectory(server, client);
-
-  return server;
+/**
+ * Loads the bundled composer UI. Resolves the HTML from whichever layout the
+ * module runs in: the compiled server (build/index.js → build/ui/composer.html)
+ * or a dev/source checkout (src/index.ts → ui/composer.html). Returns
+ * undefined when no build artifact is present, so the server still works —
+ * tools just lose their interactive companion.
+ */
+async function loadComposerHtml(): Promise<string | undefined> {
+  const candidates = [
+    // Compiled layout: build/index.js → build/ui/composer.html
+    new URL("./ui/composer.html", import.meta.url),
+    // Dev/vitest layout: src/index.ts → build/ui/composer.html
+    new URL("../build/ui/composer.html", import.meta.url),
+  ];
+  for (const candidate of candidates) {
+    try {
+      return await readFile(fileURLToPath(candidate), "utf-8");
+    } catch {
+      // try the next candidate
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -46,10 +54,35 @@ export function createServer(client: RocketChatClient): McpServer {
  * revision: no Mcp-Session-Id, no per-connection state), so this must not
  * cache or share a single server instance.
  */
+export function createServer(
+  client: RocketChatClient,
+  composerHtml?: string,
+  requireDraftReview = false
+): McpServer {
+  const server = new McpServer({
+    name: "rocket-chat-mcp",
+    version: "1.0.0",
+  });
+
+  registerSendMessage(server, client, requireDraftReview);
+  registerGetRoomMessages(server, client);
+  registerSearchMessages(server, client);
+  registerGetRoomInfo(server, client);
+  registerGetThreadMessages(server, client);
+  registerGetRoomMembers(server, client);
+  registerListRooms(server, client);
+  registerSearchDirectory(server, client);
+  registerDraftMessage(server, client, composerHtml);
+
+  return server;
+}
+
 export function createServerFactory(
-  client: RocketChatClient
+  client: RocketChatClient,
+  composerHtml?: string,
+  requireDraftReview = false
 ): McpServerFactory {
-  return () => createServer(client);
+  return () => createServer(client, composerHtml, requireDraftReview);
 }
 
 /**
@@ -67,11 +100,21 @@ function splitAllowlist(value: string | undefined): string[] | undefined {
   return parts.length > 0 ? parts : undefined;
 }
 
-export function createExpressApp(client: RocketChatClient): Application {
+export async function createExpressApp(
+  client: RocketChatClient
+): Promise<Application> {
+  const composerHtml = await loadComposerHtml();
+  const requireDraftReview = Boolean(process.env.REQUIRE_DRAFT_REVIEW);
+  const factory = createServerFactory(
+    client,
+    composerHtml,
+    requireDraftReview
+  );
+
   // createMcpHandler serves the 2026-07-28 (stateless) protocol and, by
   // default, falls back to stateless serving for 2025-era clients, so both
   // old and new MCP clients keep working behind the single /mcp endpoint.
-  const mcpHandler = toNodeHandler(createMcpHandler(createServerFactory(client)));
+  const mcpHandler = toNodeHandler(createMcpHandler(factory));
 
   // Opt-in inbound validation. Left unset by default so container and ingress
   // deployments (whose Host/Origin reflect the service, not a literal
@@ -107,11 +150,16 @@ if (isEntryPoint) {
   const useStdio = process.argv.includes("--stdio");
 
   if (useStdio) {
-    const server = createServer(rcClient);
+    const composerHtml = await loadComposerHtml();
+    const server = createServer(
+      rcClient,
+      composerHtml,
+      Boolean(process.env.REQUIRE_DRAFT_REVIEW)
+    );
     const transport = new StdioServerTransport();
     await server.connect(transport);
   } else {
-    const app = createExpressApp(rcClient);
+    const app = await createExpressApp(rcClient);
     const port = Number.parseInt(process.env.PORT ?? "3000", 10);
     app.listen(port, () => {
       console.log(`rocket-chat-mcp server listening on port ${port}`);
