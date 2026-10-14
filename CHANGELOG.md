@@ -1,3 +1,18 @@
+# [0.4.0](https://github.com/twostone/rocket-chat-mcp/compare/v0.3.0...v0.4.0) (2026-10-14)
+
+
+### Bug Fixes
+
+* **list-rooms:** account for DM rooms lacking a name ([f16cc0b](https://github.com/twostone/rocket-chat-mcp/commit/f16cc0b9070df550c4d5a3477c5dba891d123e74))
+
+
+### Features
+
+* **client:** add getMe and getMessage for drafts ([cd86e90](https://github.com/twostone/rocket-chat-mcp/commit/cd86e90a0374049f897e7c7065313b88f8a1cd86))
+* **tools:** add draft-message tool with composer MCP app resource ([d53088e](https://github.com/twostone/rocket-chat-mcp/commit/d53088e11c9626dbe3ab29b309ba2b9dac16b4b7))
+* **tools:** add output schemas, structured results, titles, annotations ([ffebe86](https://github.com/twostone/rocket-chat-mcp/commit/ffebe8694604766f50f7aa72cdcfc03f6bf85205))
+* **ui:** add React composer app with live Rocket.Chat-style preview ([dc6384a](https://github.com/twostone/rocket-chat-mcp/commit/dc6384a2e15ad23973d41681372e7270c8ba382d))
+
 # [0.3.0](https://github.com/twostone/rocket-chat-mcp/compare/v0.2.1...v0.3.0) (2026-10-08)
 
 
