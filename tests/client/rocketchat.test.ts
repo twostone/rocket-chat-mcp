@@ -583,6 +583,75 @@ describe("RocketChatClient", () => {
     });
   });
 
+  describe("getMe", () => {
+    it("calls GET /api/v1/me and returns the user", async () => {
+      const mockResponse = {
+        _id: "user123",
+        username: "testuser",
+        name: "Test User",
+        success: true,
+      };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      const result = await client.getMe();
+
+      const [url] = mockFetch.mock.calls[0];
+      expect(url).toBe("https://chat.example.com/api/v1/me");
+      expect(result).toEqual(mockResponse);
+    });
+
+    it("throws on non-200 response", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: async () => "Unauthorized",
+      });
+
+      await expect(client.getMe()).rejects.toThrow(
+        "Rocket.Chat API error (401): Unauthorized"
+      );
+    });
+  });
+
+  describe("getMessage", () => {
+    it("calls GET /api/v1/chat.getMessage and unwraps the message", async () => {
+      const mockMessage = {
+        _id: "msg1",
+        rid: "room1",
+        msg: "Hello",
+        ts: "2026-01-01T00:00:00.000Z",
+        u: { _id: "user123", username: "testuser", name: "Test User" },
+      };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ message: mockMessage, success: true }),
+      });
+
+      const result = await client.getMessage("msg1");
+
+      const [url] = mockFetch.mock.calls[0];
+      expect(url).toBe(
+        "https://chat.example.com/api/v1/chat.getMessage?msgId=msg1"
+      );
+      expect(result).toEqual(mockMessage);
+    });
+
+    it("throws on non-200 response", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        text: async () => "Not Found",
+      });
+
+      await expect(client.getMessage("nope")).rejects.toThrow(
+        "Rocket.Chat API error (404): Not Found"
+      );
+    });
+  });
+
   describe("URL construction", () => {
     it("strips trailing slashes from base URL", async () => {
       const clientWithSlash = new RocketChatClient({
