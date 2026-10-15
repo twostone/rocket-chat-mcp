@@ -1,3 +1,10 @@
+## [0.5.1](https://github.com/twostone/rocket-chat-mcp/compare/v0.5.0...v0.5.1) (2026-10-15)
+
+
+### Bug Fixes
+
+* **tools:** sanitize tool output so it conforms to its declared schema ([37cfb82](https://github.com/twostone/rocket-chat-mcp/commit/37cfb827e29c9f2f4f06ddd0906df0a1daa0e79a))
+
 # [0.5.0](https://github.com/twostone/rocket-chat-mcp/compare/v0.4.1...v0.5.0) (2026-10-15)
 
 
