@@ -160,8 +160,12 @@ function inlinesToPieces(inlines: Inlines[]): Piece[] {
   return mergePieces(out);
 }
 
+// Inlines plus the block-level KaTeX node, which the flattener must also
+// degrade (defensive: declared unions exclude it, parsed trees carry it).
+type FlatInline = Inlines | { type: "KATEX"; value: string };
+
 function flattenInline(
-  node: Inlines,
+  node: FlatInline,
   marks: Piece["marks"],
   out: Piece[]
 ): void {
@@ -192,10 +196,14 @@ function flattenInline(
       break;
     case "LINK": {
       const href = node.value.src.value;
-      const label = Array.isArray(node.value.label)
-        ? node.value.label
-        : [node.value.label];
-      const labelText = label
+      // The declared label type excludes emoji, but a parsed label can carry
+      // one — render whatever text we can, degrade the rest (ratified Q10).
+      const labelItems = (
+        Array.isArray(node.value.label)
+          ? node.value.label
+          : [node.value.label]
+      ) as unknown as Inlines[];
+      const labelText = labelItems
         .map((l) => {
           switch (l.type) {
             case "PLAIN_TEXT":

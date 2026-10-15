@@ -195,11 +195,11 @@ function serializeInline(node: Inlines, next?: Inlines): string {
     case "MENTION_CHANNEL":
       return `#${node.value.value}`;
     case "BOLD":
-      return `*${node.value.map(serializeInline).join("")}*`;
+      return `*${serializeInlines(node.value)}*`;
     case "ITALIC":
-      return `_${node.value.map(serializeInline).join("")}_`;
+      return `_${serializeInlines(node.value)}_`;
     case "STRIKE":
-      return `~~${node.value.map(serializeInline).join("")}~~`;
+      return `~~${serializeInlines(node.value)}~~`;
     case "INLINE_CODE":
       return `\`${node.value.value}\``;
     case "LINK": {
@@ -207,7 +207,7 @@ function serializeInline(node: Inlines, next?: Inlines): string {
       const labelParts = Array.isArray(node.value.label)
         ? node.value.label
         : [node.value.label];
-      const label = labelParts.map(serializeInline).join("");
+      const label = serializeInlines(labelParts);
       // A bare URL (no label, no whitespace) re-parses as an autolink whose
       // label equals the URL, so it is emitted without markdown decoration.
       if (label === src && !/\s/.test(src)) {
@@ -222,18 +222,18 @@ function serializeInline(node: Inlines, next?: Inlines): string {
       return "";
     case "INLINE_KATEX":
       return node.value;
-    case "KATEX":
-      return node.value;
     case "SPOILER":
-      return node.value.map(serializeInline).join("");
+      return serializeInlines(node.value);
     case "IMAGE":
       // Leading space mirrors how images sit in prose and keeps the label
       // from gluing onto the preceding word.
-      return ` ${serializeInline(node.value.label)}`;
+      return ` ${serializeInlines([node.value.label])}`;
     case "TIMESTAMP":
       return node.fallback ? serializeInline(node.fallback) : "";
     default:
-      notImplemented(node.type);
+      // The declared union is exhaustive for every producible AST; a block-
+      // level node leaking in is a programmer error, so this is unreachable.
+      notImplemented((node as { type: string }).type);
   }
 }
 
