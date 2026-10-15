@@ -72,10 +72,17 @@ export function pmToAst(doc: PMDoc): Root {
       inlines.length <= 3 &&
       inlines.every((n) => n.type === "EMOJI")
     ) {
-      return [{ type: "BIG_EMOJI", value: inlines as unknown as never }];
+      // The parser only emits this root for 1–3 emoji on a line.
+      const value = (inlines as Array<{ type: "EMOJI"; value: unknown; unicode?: string }>).slice(
+        0,
+        3
+      );
+      return [{ type: "BIG_EMOJI", value: value as never }];
     }
   }
-  return normalized;
+  // The invariant above guarantees the array is either all content blocks or
+  // a lone big-emoji root — one of the two `Root` shapes exactly.
+  return normalized as Root;
 }
 
 /* ---------- blocks ---------- */
@@ -94,9 +101,19 @@ function mapBlock(node: PMNode): Root[number][] {
       return mapParagraph(node);
     case "heading": {
       const level = clampHeadingLevel(node.attrs?.level);
-      return [
-        { type: "HEADING", level, value: mapInlines(node.content ?? []) },
-      ];
+      // The parser admits only plain text in a heading, so emphatic inlines
+      // degrade to their text (documented lossiness).
+      const value: Array<{ type: "PLAIN_TEXT"; value: string }> = (
+        node.content ?? []
+      ).flatMap((child) =>
+        child.type === "text"
+          ? [{ type: "PLAIN_TEXT", value: child.text ?? "" } satisfies {
+              type: "PLAIN_TEXT";
+              value: string;
+            }]
+          : []
+      );
+      return [{ type: "HEADING", level, value }];
     }
     case "codeBlock": {
       const language = node.attrs?.language;
@@ -270,34 +287,42 @@ function mapInline(node: PMNode): Inlines[] {
   return out;
 }
 
-function nest(markStack: string[], leaf: Inlines): Inlines {
-  // TipTap orders marks outermost-first; the parser forbids self-nesting,
-  // so each name is applied at most once.
+// Leaves that `nest` can emit from PM marks: plain text, emoji, or link
+// (there is no PM mark that yields a spoiler).
+type NestableLeaf = Extract<
+  Inlines,
+  { type: "PLAIN_TEXT" } | { type: "EMOJI" } | { type: "LINK" }
+>;
+
+function nest(markStack: string[], leaf: NestableLeaf): Inlines {
+  // TipTap orders marks outermost-first. Mark overlap is legal in the doc
+  // (bold+strike, strike-in-strike); the parser's type definitions forbid
+  // some overlaps, so the assembled tree is relaxed at the return.
   let node: Inlines = leaf;
   for (const mark of [...markStack].reverse()) {
     if (mark === "bold") {
-      node = { type: "BOLD", value: [node] };
+      node = { type: "BOLD", value: [node] } as unknown as Inlines;
     } else if (mark === "italic") {
-      node = { type: "ITALIC", value: [node] };
+      node = { type: "ITALIC", value: [node] } as unknown as Inlines;
     } else if (mark === "strike") {
-      node = { type: "STRIKE", value: [node] };
+      node = { type: "STRIKE", value: [node] } as unknown as Inlines;
     }
   }
   return node;
 }
 
-function emojiLeaf(piece: string, isEmoji: boolean): Inlines {
+function emojiLeaf(piece: string, isEmoji: boolean): NestableLeaf {
   if (isEmoji) {
-    return { type: "EMOJI", value: undefined, unicode: piece } as Inlines;
+    return { type: "EMOJI", value: undefined, unicode: piece } as NestableLeaf;
   }
-  return { type: "PLAIN_TEXT", value: piece } as Inlines;
+  return { type: "PLAIN_TEXT", value: piece } as NestableLeaf;
 }
 
 function linkLeaf(
   piece: string,
   isEmoji: boolean,
   attrs: Record<string, unknown> | null | undefined
-): Inlines {
+): NestableLeaf {
   const label = emojiLeaf(piece, isEmoji);
   return {
     type: "LINK",
@@ -308,7 +333,7 @@ function linkLeaf(
       },
       label: [label],
     },
-  } as unknown as Inlines;
+  } as NestableLeaf;
 }
 
 /* Split text into [piece, isEmoji] runs: each grapheme the bundled emoji
