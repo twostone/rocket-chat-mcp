@@ -1,3 +1,18 @@
+# [0.5.0](https://github.com/twostone/rocket-chat-mcp/compare/v0.4.1...v0.5.0) (2026-10-15)
+
+
+### Bug Fixes
+
+* **ui:** adapt serializer and mappers to message-parser 0.32 ([6256227](https://github.com/twostone/rocket-chat-mcp/commit/6256227b9d53591fe9f7abf19694418ad1dedbdf))
+* **ui:** tighten AST mapper and serializer typings against the parser ([e9957e9](https://github.com/twostone/rocket-chat-mcp/commit/e9957e913647bd3f39cc394acf128c3e319dfb91))
+
+
+### Features
+
+* **ui:** add ProseMirror composer editor with keyboard, paste, drop contracts ([a6c97c3](https://github.com/twostone/rocket-chat-mcp/commit/a6c97c31c278adc991e161774896b5557d8a757d))
+* **ui:** add WYSIWYG editor React component with formatting toolbar ([bd307d7](https://github.com/twostone/rocket-chat-mcp/commit/bd307d7f06d2991c92f2124782ad6ac496307a91))
+* **ui:** wire the WYSIWYG editor into the composer with close-on-success ([640e34e](https://github.com/twostone/rocket-chat-mcp/commit/640e34e040cee56e09dc3df4bc646dfbe38cec50))
+
 ## [0.4.1](https://github.com/twostone/rocket-chat-mcp/compare/v0.4.0...v0.4.1) (2026-10-14)
 
 
