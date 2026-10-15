@@ -60,7 +60,9 @@ export function serialize(root: Root): string {
     out += serializeBlock(block);
   });
   if (trailingLbs > 0) {
-    const nl = trailingLbs + (isSoft(real[real.length - 1]) ? 1 : 0);
+    // Mirrors the separator rule: only a code fence's own line ending
+    // contributes its break for free, every other block absorbs it.
+    const nl = trailingLbs + (isHard(real[real.length - 1]) ? 0 : 1);
     out += "\n".repeat(nl);
   }
   return out;
@@ -69,29 +71,25 @@ export function serialize(root: Root): string {
 /**
  * Number of newlines required between a block and the following content so
  * the parser reproduces exactly `lbs` LINE_BREAK nodes between them.
- * Verified rule: a line ending after a paragraph or (task) list is absorbed,
- * so a soft block needs `lbs + 1`; a hard block (heading, code, quote, ...)
- * makes the line ending itself a LINE_BREAK, so it needs exactly `lbs`
- * (the parser guarantees `lbs >= 1` after hard blocks; the `Math.max` only
- * guards synthetic ASTs that violate that guarantee).
+ * Verified against parser 0.32: a single line ending after a paragraph, list,
+ * (task) list, quote, heading, table or horizontal rule is ABSORBED, so those
+ * blocks need `lbs + 1` newlines. Only a code fence is exceptional — its
+ * closing line always yields one LINE_BREAK — so it needs exactly `lbs`
+ * (the `Math.max` guards synthetic ASTs where a code block is followed by
+ * zero recorded breaks).
  */
 function separatorLength(previous: Root[number], lbs: number): number {
-  const nl = isSoft(previous) ? lbs + 1 : lbs;
+  const nl = isHard(previous) ? lbs : lbs + 1;
   return Math.max(1, nl);
 }
 
 /**
- * Paragraphs and lists absorb the single line ending after them (the parser
- * emits no LINE_BREAK for it); every other block type does not. Verified
- * against `parse` for all block-type pairs.
+ * All blocks except code fences absorb the single line ending after them
+ * (the parser emits no LINE_BREAK for it) — verified against `parse` for the
+ * block-type pairs in 0.32 (headings stopped emitting one after bare newlines).
  */
-function isSoft(block: Root[number]): boolean {
-  return (
-    block.type === "PARAGRAPH" ||
-    block.type === "UNORDERED_LIST" ||
-    block.type === "ORDERED_LIST" ||
-    block.type === "TASKS"
-  );
+function isHard(block: Root[number]): boolean {
+  return block.type === "CODE";
 }
 
 function serializeBlock(block: Root[number]): string {
@@ -229,7 +227,11 @@ function serializeInline(node: Inlines, next?: Inlines): string {
       // from gluing onto the preceding word.
       return ` ${serializeInlines([node.value.label])}`;
     case "TIMESTAMP":
-      return node.fallback ? serializeInline(node.fallback) : "";
+      // 0.32: the fallback may be a Plain node or a SourceRange tuple —
+      // only the former carries text to emit (arrays discriminate the tuple).
+      return !Array.isArray(node.fallback) && node.fallback
+        ? serializeInline(node.fallback)
+        : "";
     default:
       // The declared union is exhaustive for every producible AST; a block-
       // level node leaking in is a programmer error, so this is unreachable.

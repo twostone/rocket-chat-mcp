@@ -41,18 +41,19 @@ export type PMDoc = { type: "doc"; content?: PMNode[] | null };
 export function pmToAst(doc: PMDoc): Root {
   const mapped = mapBlocks(doc.content ?? []);
 
-  // Parser-shape normalization: the Rocket.Chat parser ALWAYS emits a
-  // LINE_BREAK between a heading or a code block and the next content block
-  // (verified: `# H1\na` → [H, LB, P]; "```\nx\n```\na" → [C, LB, P]),
-  // whereas paragraphs/lists/quotes absorb the line ending. Insert the same
-  // breaks so the AST matches what the parser would produce.
+  // Parser-shape normalization: in parser 0.32 the closing fence of a code
+  // block always yields a LINE_BREAK before the next content block (verified:
+  // "```\nx\n```\na" -> [CODE, LINE_BREAK, PARAGRAPH]), while a heading,
+  // paragraph, list or quote absorbs the bare line ending (no break). Insert
+  // the break after code blocks only, so the AST matches what the parser
+  // would produce.
   const normalized: Root[number][] = [];
   mapped.forEach((block, i) => {
     normalized.push(block);
     if (
       i < mapped.length - 1 &&
       mapped[i + 1].type !== "LINE_BREAK" &&
-      (block.type === "HEADING" || block.type === "CODE")
+      block.type === "CODE"
     ) {
       normalized.push({ type: "LINE_BREAK", value: undefined });
     }
