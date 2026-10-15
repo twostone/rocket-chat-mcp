@@ -415,3 +415,185 @@ h4 {
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+/* --- WYSIWYG editor surface (TipTap) --- */
+
+.composer-tiptap {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-soft);
+  overflow: hidden;
+}
+
+.composer-tiptap-host .tiptap {
+  min-height: 90px;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--text);
+}
+
+.composer-tiptap-host .tiptap p {
+  margin: 0 0 0.35em;
+}
+
+.composer-tiptap-host .tiptap p:last-child {
+  margin-bottom: 0;
+}
+
+.composer-tiptap-host .tiptap h1,
+.composer-tiptap-host .tiptap h2,
+.composer-tiptap-host .tiptap h3,
+.composer-tiptap-host .tiptap h4 {
+  margin: 0.7em 0 0.3em;
+  line-height: 1.25;
+}
+
+.composer-tiptap-host .tiptap ul,
+.composer-tiptap-host .tiptap ol {
+  margin: 0.35em 0 0.35em 1.4em;
+  padding: 0;
+}
+
+.composer-tiptap-host .tiptap li p {
+  margin: 0;
+}
+
+.composer-tiptap-host .tiptap blockquote {
+  margin: 0.5em 0;
+  padding-left: 12px;
+  border-left: 3px solid var(--quote-border);
+  color: var(--text-soft);
+}
+
+.composer-tiptap-host .tiptap code {
+  background: var(--code-bg);
+  color: var(--code-text);
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+
+.composer-tiptap-host .tiptap pre {
+  background: var(--code-bg);
+  border-radius: 6px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  margin: 0.5em 0;
+}
+
+.composer-tiptap-host .tiptap pre code {
+  background: transparent;
+  color: var(--text);
+  padding: 0;
+}
+
+.composer-tiptap-host .tiptap a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.composer-tiptap-host .tiptap ul[data-checked] {
+  list-style: none;
+}
+
+.composer-tiptap-host .tiptap ul[data-checked] > li::before {
+  content: none;
+}
+
+.composer-view-bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.btn.tiny {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+
+.composer-source {
+  width: 100%;
+  min-height: 90px;
+  resize: vertical;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--text);
+  background: var(--bg-soft);
+}
+
+.composer-source:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.composer-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.tb-btn {
+  min-width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 0 6px;
+}
+
+.tb-btn:hover {
+  background: var(--bg-soft);
+}
+
+.tb-btn[aria-pressed="true"] {
+  background: var(--mention-bg);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tb-btn.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+}
+
+.tb-select {
+  height: 28px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.composer-linkbar {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.composer-linkbar input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
