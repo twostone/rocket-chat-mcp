@@ -66,6 +66,40 @@ describe("get-thread-messages tool", () => {
     });
   });
 
+  it("strips unrecognized fields from each reply so output matches its schema", async () => {
+    vi.mocked(client.getThreadMessages).mockResolvedValueOnce({
+      messages: [
+        {
+          _id: "msg1",
+          rid: "room1",
+          msg: "Reply with extras",
+          ts: "2026-01-01T00:00:00.000Z",
+          u: { _id: "u1", username: "user1" },
+          tmid: "parent1",
+          // Fields Rocket.Chat attaches that the output schema does not declare:
+          md: ["Reply with extras"],
+          urls: ["https://example.com"],
+          tcount: 5,
+        },
+      ],
+      success: true,
+    });
+
+    const result = await toolHandler({ tmid: "parent1" });
+
+    expect(result.isError).toBeFalsy();
+    expect(result.structuredContent).toEqual([
+      {
+        _id: "msg1",
+        rid: "room1",
+        msg: "Reply with extras",
+        ts: "2026-01-01T00:00:00.000Z",
+        u: { _id: "u1", username: "user1" },
+        tmid: "parent1",
+      },
+    ]);
+  });
+
   it("passes count and offset to client", async () => {
     vi.mocked(client.getThreadMessages).mockResolvedValueOnce({
       messages: [],

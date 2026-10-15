@@ -3,6 +3,11 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import type { RocketChatClient } from "../client/rocketchat.js";
 import { RoomInfoSchema } from "../types.js";
 
+// Declares exactly the fields each room exposes. Parsing through it strips
+// any extra fields Rocket.Chat attaches (ts, fslid, ...) so the tool output
+// always matches its schema.
+const RoomsSchema = z.array(RoomInfoSchema);
+
 export function registerListRooms(
   server: McpServer,
   client: RocketChatClient
@@ -21,13 +26,13 @@ export function registerListRooms(
             "ISO 8601 date string to only return rooms updated since that date"
           ),
       }),
-      outputSchema: z.array(RoomInfoSchema),
+      outputSchema: RoomsSchema,
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async ({ updatedSince }) => {
       try {
         const result = await client.getRooms(updatedSince);
-        const rooms = result.update;
+        const rooms = RoomsSchema.parse(result.update);
         return {
           content: [
             {

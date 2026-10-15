@@ -139,6 +139,49 @@ describe("get-room-messages tool", () => {
     );
   });
 
+  it("strips unrecognized fields from each message so output matches its schema", async () => {
+    vi.mocked(client.getRoomInfo).mockResolvedValueOnce({
+      room: { _id: "chan1", name: "general", t: "c" },
+      success: true,
+    });
+    vi.mocked(client.getMessages).mockResolvedValueOnce({
+      messages: [
+        {
+          _id: "msg1",
+          rid: "chan1",
+          msg: "Hello with extra fields",
+          ts: "2026-01-01T00:00:00.000Z",
+          u: { _id: "u1", username: "user1", name: "User One" },
+          _updatedAt: "2026-01-02T00:00:00.000Z",
+          // Fields Rocket.Chat attaches that the output schema does not declare:
+          md: ["Hello with extra fields"],
+          urls: [],
+          tcount: 3,
+          replies: 3,
+          reactions: { "+1": { usercount: 1, userIds: ["u2"] } },
+        },
+      ],
+      success: true,
+    });
+
+    const result = await toolHandler({ roomName: "general" });
+
+    expect(result.isError).toBeFalsy();
+    expect(result.structuredContent).toEqual([
+      {
+        _id: "msg1",
+        rid: "chan1",
+        msg: "Hello with extra fields",
+        ts: "2026-01-01T00:00:00.000Z",
+        u: { _id: "u1", username: "user1", name: "User One" },
+        _updatedAt: "2026-01-02T00:00:00.000Z",
+      },
+    ]);
+    const text = (result.content[0] as { type: string; text: string }).text;
+    expect(text).not.toContain("tcount");
+    expect(text).not.toContain('"md"');
+  });
+
   it("returns isError for unsupported room types (dm)", async () => {
     vi.mocked(client.getRoomInfo).mockResolvedValueOnce({
       room: { _id: "dm1", name: "someuser", t: "d" },

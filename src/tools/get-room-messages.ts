@@ -3,6 +3,11 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import type { RocketChatClient } from "../client/rocketchat.js";
 import { RocketChatMessageSchema } from "../types.js";
 
+// Declares exactly the fields each message exposes. Parsing through it strips
+// any extra fields Rocket.Chat attaches (md, urls, reactions, tcount, ...) so
+// the tool output always matches its schema.
+const MessagesSchema = z.array(RocketChatMessageSchema);
+
 export function registerGetRoomMessages(
   server: McpServer,
   client: RocketChatClient
@@ -36,7 +41,7 @@ export function registerGetRoomMessages(
           .optional()
           .describe("ISO 8601 timestamp — only return messages before this date"),
       }),
-      outputSchema: z.array(RocketChatMessageSchema),
+      outputSchema: MessagesSchema,
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async ({ roomName, count, offset, oldest, latest }) => {
@@ -67,7 +72,7 @@ export function registerGetRoomMessages(
                 latest
               );
 
-        const messages = result.messages;
+        const messages = MessagesSchema.parse(result.messages);
         return {
           content: [
             {

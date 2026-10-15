@@ -3,6 +3,11 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import type { RocketChatClient } from "../client/rocketchat.js";
 import { RocketChatMessageSchema } from "../types.js";
 
+// Declares exactly the fields each message exposes. Parsing through it strips
+// any extra fields Rocket.Chat attaches (md, urls, reactions, tcount, ...) so
+// the tool output always matches its schema.
+const MessagesSchema = z.array(RocketChatMessageSchema);
+
 export function registerGetThreadMessages(
   server: McpServer,
   client: RocketChatClient
@@ -24,13 +29,13 @@ export function registerGetThreadMessages(
           .optional()
           .describe("Number of messages to skip for pagination"),
       }),
-      outputSchema: z.array(RocketChatMessageSchema),
+      outputSchema: MessagesSchema,
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async ({ tmid, count, offset }) => {
       try {
         const result = await client.getThreadMessages(tmid, count, offset);
-        const messages = result.messages;
+        const messages = MessagesSchema.parse(result.messages);
         return {
           content: [
             {

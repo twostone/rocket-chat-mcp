@@ -57,6 +57,25 @@ describe("list-rooms tool", () => {
     });
   });
 
+  it("strips unrecognized fields from each room so output matches its schema", async () => {
+    vi.mocked(client.getRooms).mockResolvedValueOnce({
+      update: [
+        // Fields Rocket.Chat attaches that the output schema does not declare:
+        { _id: "ch1", name: "general", t: "c", usersCount: 5, ts: "2026-01-01T00:00:00.000Z" },
+        { _id: "grp1", name: "secret", t: "p", fslid: true },
+      ],
+      success: true,
+    });
+
+    const result = await toolHandler({});
+
+    expect(result.isError).toBeFalsy();
+    expect(result.structuredContent).toEqual([
+      { _id: "ch1", name: "general", t: "c", usersCount: 5 },
+      { _id: "grp1", name: "secret", t: "p" },
+    ]);
+  });
+
   it("passes updatedSince to client", async () => {
     vi.mocked(client.getRooms).mockResolvedValueOnce({
       update: [],

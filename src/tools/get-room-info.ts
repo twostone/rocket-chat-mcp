@@ -26,7 +26,9 @@ export function registerGetRoomInfo(
     async ({ roomName }) => {
       try {
         const result = await client.getRoomInfo(roomName);
-        const room = result.room;
+        // Parse through the schema so the room only carries the fields we
+        // declared — Rocket.Chat returns extras (_modifiedAt, favicons, ...).
+        const room = RoomInfoSchema.parse(result.room);
         return {
           content: [
             {

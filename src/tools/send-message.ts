@@ -54,7 +54,9 @@ export function registerSendMessage(
           tmid,
           tshow,
         });
-        const sent = result.message;
+        // Parse through the schema so the sent message only carries the
+        // fields we declared — Rocket.Chat echoes extras (_modifiedAt, ...).
+        const sent = RocketChatMessageSchema.parse(result.message);
         return {
           content: [
             {
