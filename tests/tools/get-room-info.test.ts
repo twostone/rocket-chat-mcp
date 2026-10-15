@@ -53,6 +53,34 @@ describe("get-room-info tool", () => {
     });
   });
 
+  it("strips unrecognized fields from the room so output matches its schema", async () => {
+    vi.mocked(client.getRoomInfo).mockResolvedValueOnce({
+      room: {
+        _id: "room1",
+        name: "general",
+        t: "c",
+        usersCount: 3,
+        topic: "talk",
+        // Fields Rocket.Chat attaches that the output schema does not declare:
+        _modifiedAt: "2026-01-01T00:00:00.000Z",
+        fslid: true,
+        ts: "2026-01-01T00:00:00.000Z",
+      },
+      success: true,
+    });
+
+    const result = await toolHandler({ roomName: "general" });
+
+    expect(result.isError).toBeFalsy();
+    expect(result.structuredContent).toEqual({
+      _id: "room1",
+      name: "general",
+      t: "c",
+      usersCount: 3,
+      topic: "talk",
+    });
+  });
+
   it("returns isError on API failure", async () => {
     vi.mocked(client.getRoomInfo).mockRejectedValueOnce(
       new Error("Rocket.Chat API error (404): Room not found")

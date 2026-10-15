@@ -69,6 +69,38 @@ describe("send-message tool", () => {
     });
   });
 
+  it("strips unrecognized fields from the sent message so output matches its schema", async () => {
+    vi.mocked(client.getRoomInfo).mockResolvedValueOnce({
+      room: { _id: "room1", name: "general", t: "c" },
+      success: true,
+    });
+    vi.mocked(client.sendMessage).mockResolvedValueOnce({
+      message: {
+        _id: "msg1",
+        rid: "room1",
+        msg: "Hello",
+        ts: "2026-01-01T00:00:00.000Z",
+        u: { _id: "u1", username: "bot" },
+        // Fields Rocket.Chat attaches that the output schema does not declare:
+        _modifiedAt: "2026-01-02T00:00:00.000Z",
+        md: ["Hello"],
+        parsed: [],
+      },
+      success: true,
+    });
+
+    const result = await toolHandler({ roomName: "general", message: "Hello" });
+
+    expect(result.isError).toBeFalsy();
+    expect(result.structuredContent).toEqual({
+      _id: "msg1",
+      rid: "room1",
+      msg: "Hello",
+      ts: "2026-01-01T00:00:00.000Z",
+      u: { _id: "u1", username: "bot" },
+    });
+  });
+
   it("resolves a DM by username and sends the message", async () => {
     vi.mocked(client.getRoomInfo).mockResolvedValueOnce({
       room: { _id: "dm1", name: "someuser", t: "d" },

@@ -75,6 +75,40 @@ describe("search-messages tool", () => {
     });
   });
 
+  it("strips unrecognized fields from results so output matches its schema", async () => {
+    vi.mocked(client.getRoomInfo).mockResolvedValueOnce({
+      room: { _id: "room1", name: "general", t: "c" },
+      success: true,
+    });
+    vi.mocked(client.searchMessages).mockResolvedValueOnce({
+      messages: [
+        {
+          _id: "msg1",
+          rid: "room1",
+          msg: "found it",
+          ts: "2026-01-01T00:00:00.000Z",
+          u: { _id: "u1", username: "user1" },
+          md: ["found it"],
+          tcount: 1,
+        },
+      ],
+      success: true,
+    });
+
+    const result = await toolHandler({ roomName: "general", searchText: "found" });
+
+    expect(result.isError).toBeFalsy();
+    expect(result.structuredContent).toEqual([
+      {
+        _id: "msg1",
+        rid: "room1",
+        msg: "found it",
+        ts: "2026-01-01T00:00:00.000Z",
+        u: { _id: "u1", username: "user1" },
+      },
+    ]);
+  });
+
   it("resolves a group by name and searches it", async () => {
     vi.mocked(client.getRoomInfo).mockResolvedValueOnce({
       room: { _id: "grp1", name: "team-x", t: "p" },

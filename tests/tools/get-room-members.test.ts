@@ -96,6 +96,29 @@ describe("get-room-members tool", () => {
     });
   });
 
+  it("strips unrecognized fields from each member so output matches its schema", async () => {
+    vi.mocked(client.getRoomInfo).mockResolvedValueOnce({
+      room: { _id: "chan1", name: "general", t: "c" },
+      success: true,
+    });
+    vi.mocked(client.getChannelMembers).mockResolvedValueOnce({
+      members: [
+        { _id: "u1", username: "user1", name: "User One", status: "online" },
+        // Fields Rocket.Chat attaches that the output schema does not declare:
+        { _id: "u2", username: "user2", roles: ["owner"], lastLoginTs: "2026-01-01T00:00:00.000Z" },
+      ],
+      success: true,
+    });
+
+    const result = await toolHandler({ roomName: "general" });
+
+    expect(result.isError).toBeFalsy();
+    expect(result.structuredContent).toEqual([
+      { _id: "u1", username: "user1", name: "User One", status: "online" },
+      { _id: "u2", username: "user2" },
+    ]);
+  });
+
   it("passes count and offset to client", async () => {
     vi.mocked(client.getRoomInfo).mockResolvedValueOnce({
       room: { _id: "chan1", name: "general", t: "c" },

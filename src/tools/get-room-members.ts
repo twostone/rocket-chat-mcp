@@ -3,6 +3,11 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import type { RocketChatClient } from "../client/rocketchat.js";
 import { GroupMemberSchema } from "../types.js";
 
+// Declares exactly the fields each member exposes. Parsing through it strips
+// any extra fields Rocket.Chat attaches so the tool output always matches its
+// schema.
+const MembersSchema = z.array(GroupMemberSchema);
+
 export function registerGetRoomMembers(
   server: McpServer,
   client: RocketChatClient
@@ -28,7 +33,7 @@ export function registerGetRoomMembers(
           .optional()
           .describe("Number of members to skip for pagination"),
       }),
-      outputSchema: z.array(GroupMemberSchema),
+      outputSchema: MembersSchema,
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async ({ roomName, count, offset }) => {
@@ -53,7 +58,7 @@ export function registerGetRoomMembers(
             ? await client.getChannelMembers(room._id, count, offset)
             : await client.getGroupMembers(room._id, count, offset);
 
-        const members = result.members;
+        const members = MembersSchema.parse(result.members);
         return {
           content: [
             {

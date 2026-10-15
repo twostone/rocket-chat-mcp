@@ -3,6 +3,11 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import type { RocketChatClient } from "../client/rocketchat.js";
 import { DirectoryResultSchema } from "../types.js";
 
+// Declares exactly the fields each directory result exposes. Parsing through
+// it strips any extra fields Rocket.Chat attaches so the tool output always
+// matches its schema.
+const MatchesSchema = z.array(DirectoryResultSchema);
+
 export function registerSearchDirectory(
   server: McpServer,
   client: RocketChatClient
@@ -33,7 +38,7 @@ export function registerSearchDirectory(
             "Workspace scope: 'local' (default) or 'all' (requires federation)"
           ),
       }),
-      outputSchema: z.array(DirectoryResultSchema),
+      outputSchema: MatchesSchema,
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async ({ text, type, count, offset, workspace }) => {
@@ -45,7 +50,7 @@ export function registerSearchDirectory(
           offset,
           workspace
         );
-        const matches = result.result;
+        const matches = MatchesSchema.parse(result.result);
         return {
           content: [
             {

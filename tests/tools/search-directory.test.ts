@@ -36,9 +36,12 @@ describe("search-directory tool", () => {
   });
 
   it("returns results when searching for users", async () => {
+    // Keys are listed in the DirectoryResultSchema declaration order
+    // (_id, name, username, ...) so the pretty-printed text matches the
+    // canonicalized output of the tool.
     const mockResults = [
-      { _id: "u1", username: "alice", name: "Alice" },
-      { _id: "u2", username: "bob", name: "Bob" },
+      { _id: "u1", name: "Alice", username: "alice" },
+      { _id: "u2", name: "Bob", username: "bob" },
     ];
     vi.mocked(client.searchDirectory).mockResolvedValueOnce({
       result: mockResults,
@@ -92,6 +95,33 @@ describe("search-directory tool", () => {
       ],
       structuredContent: mockResults,
     });
+  });
+
+  it("strips unrecognized fields from results so output matches its schema", async () => {
+    vi.mocked(client.searchDirectory).mockResolvedValueOnce({
+      result: [
+        {
+          _id: "u1",
+          username: "alice",
+          name: "Alice",
+          // Fields Rocket.Chat attaches that the output schema does not declare:
+          statuses: "online",
+          roles: ["user"],
+          lastLoginTs: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+      count: 1,
+      offset: 0,
+      total: 1,
+      success: true,
+    });
+
+    const result = await toolHandler({ text: "ali", type: "users" });
+
+    expect(result.isError).toBeFalsy();
+    expect(result.structuredContent).toEqual([
+      { _id: "u1", username: "alice", name: "Alice" },
+    ]);
   });
 
   it("passes count, offset, and workspace to client", async () => {
