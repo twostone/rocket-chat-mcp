@@ -218,8 +218,16 @@ function NodeView({
       );
     case "LINE_BREAK":
       return <br />;
-    case "TIMESTAMP":
-      return <span className="timestamp">{node.fallback ? plainText(node.fallback) : node.value.timestamp}</span>;
+    case "TIMESTAMP": {
+      // 0.32: the fallback may be a Plain node or a SourceRange tuple
+      // (an array — use it as the discriminator, tuples have no `type`).
+      const fb = node.fallback;
+      return (
+        <span className="timestamp">
+          {!Array.isArray(fb) && fb ? plainText(fb) : node.value.timestamp}
+        </span>
+      );
+    }
     case "KATEX":
     case "INLINE_KATEX":
       return <code className="math">{node.value}</code>;

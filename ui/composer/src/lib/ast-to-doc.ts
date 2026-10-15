@@ -254,12 +254,11 @@ function flattenInline(
       });
       break;
     case "TIMESTAMP":
-      if (node.fallback) {
+      // 0.32: the fallback may be a Plain node or a SourceRange tuple
+      // (an array — use it as the discriminator; tuples have no `type`).
+      if (!Array.isArray(node.fallback) && node.fallback) {
         out.push({
-          text:
-            node.fallback.type === "PLAIN_TEXT"
-              ? node.fallback.value
-              : "",
+          text: node.fallback.type === "PLAIN_TEXT" ? node.fallback.value : "",
           marks,
         });
       }
